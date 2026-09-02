@@ -7,7 +7,7 @@
   "lat": 40.992923,
   "lon": 29.104806
  },
- "generated_at": "2026-09-02T09:17:09.517Z",
+ "generated_at": "2026-09-02T09:27:32.528Z",
  "generator": "scripts/build_graph.js",
  "source": {
   "seatmap": "data/seatmap.json",
@@ -71,6 +71,7 @@
  "important_warning": "Seat, row and section positions come from the ticketing seat map and are exact in canvas units; entrance GPS positions and street approach paths come from the organiser. Portals, concourses, stairs, elevators and checkpoints are modelled from that geometry – they are not surveyed. The metre scale and the compass orientation of the canvas are estimates. Verify on-site or against an architectural plan before production use.",
  "modelling_notes": [
   "Section portals are placed 0.9 m behind the last row of each stand, on the axis of the rows; concourse centre lines 1.8 m behind the portals.",
+  "Interior entrance signs: one signed entrance per section (SHARED_PORTALS is empty – fill it from the signs inside the arena).",
   "Each level has one concourse loop that follows the real stand geometry and closes behind the stage end (those segments carry a small penalty).",
   "The VIP floor is entered from the rear of the floor through a tunnel under the rear stands, from the level-1 concourse.",
   "Vertical cores: one at the 400 entrance and one at the 100–200 entrance (stairs + escalator + elevator) plus two stairs-only cores (south side, stage end).",
@@ -551,7 +552,9 @@
    "portal": {
     "x": 1018.9,
     "y": 277.9,
-    "node": "L1_SECTION_102_PORTAL"
+    "node": "L1_SECTION_102_PORTAL",
+    "sign": "102",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_102",
    "rows": [
@@ -614,7 +617,9 @@
    "portal": {
     "x": 1022.9,
     "y": 971,
-    "node": "L1_SECTION_103_PORTAL"
+    "node": "L1_SECTION_103_PORTAL",
+    "sign": "103",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_103",
    "rows": [
@@ -690,7 +695,9 @@
    "portal": {
     "x": 1023.5,
     "y": 1798,
-    "node": "L1_SECTION_104_PORTAL"
+    "node": "L1_SECTION_104_PORTAL",
+    "sign": "104",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_104",
    "rows": [
@@ -778,7 +785,9 @@
    "portal": {
     "x": 1004.9,
     "y": 2450.5,
-    "node": "L1_SECTION_105_PORTAL"
+    "node": "L1_SECTION_105_PORTAL",
+    "sign": "105",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_105",
    "rows": [
@@ -874,7 +883,9 @@
    "portal": {
     "x": 1271.1,
     "y": 2955.2,
-    "node": "L1_SECTION_106_PORTAL"
+    "node": "L1_SECTION_106_PORTAL",
+    "sign": "106",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_106",
    "rows": [
@@ -993,7 +1004,9 @@
    "portal": {
     "x": 1730.8,
     "y": 3348.2,
-    "node": "L1_SECTION_107_PORTAL"
+    "node": "L1_SECTION_107_PORTAL",
+    "sign": "107",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_107",
    "rows": [
@@ -1096,7 +1109,9 @@
    "portal": {
     "x": 2810.3,
     "y": 3717.5,
-    "node": "L1_SECTION_108_PORTAL"
+    "node": "L1_SECTION_108_PORTAL",
+    "sign": "108",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_108",
    "rows": [
@@ -1179,7 +1194,9 @@
    "portal": {
     "x": 3510.7,
     "y": 3704.2,
-    "node": "L1_SECTION_109_PORTAL"
+    "node": "L1_SECTION_109_PORTAL",
+    "sign": "109",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_109",
    "rows": [
@@ -1287,7 +1304,9 @@
    "portal": {
     "x": 4376.8,
     "y": 3341,
-    "node": "L1_SECTION_110_PORTAL"
+    "node": "L1_SECTION_110_PORTAL",
+    "sign": "110",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_110",
    "rows": [
@@ -1402,7 +1421,9 @@
    "portal": {
     "x": 4823.7,
     "y": 2749.7,
-    "node": "L1_SECTION_111_PORTAL"
+    "node": "L1_SECTION_111_PORTAL",
+    "sign": "111",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_111",
    "rows": [
@@ -1486,7 +1507,9 @@
    "portal": {
     "x": 5146.8,
     "y": 2412.4,
-    "node": "L1_SECTION_112_PORTAL"
+    "node": "L1_SECTION_112_PORTAL",
+    "sign": "112",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_112",
    "rows": [
@@ -1562,7 +1585,9 @@
    "portal": {
     "x": 5190.6,
     "y": 1753.4,
-    "node": "L1_SECTION_113_PORTAL"
+    "node": "L1_SECTION_113_PORTAL",
+    "sign": "113",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_113",
    "rows": [
@@ -1639,7 +1664,9 @@
    "portal": {
     "x": 5193.2,
     "y": 837,
-    "node": "L1_SECTION_114_PORTAL"
+    "node": "L1_SECTION_114_PORTAL",
+    "sign": "114",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_114",
    "rows": [
@@ -1720,7 +1747,9 @@
    "portal": {
     "x": 5162.2,
     "y": 287,
-    "node": "L1_SECTION_115_PORTAL"
+    "node": "L1_SECTION_115_PORTAL",
+    "sign": "115",
+    "shared": false
    },
    "corridor_node": "L1_CORRIDOR_115",
    "rows": [
@@ -1799,7 +1828,9 @@
    "portal": {
     "x": 661.5,
     "y": 275.6,
-    "node": "L2_SECTION_202_PORTAL"
+    "node": "L2_SECTION_202_PORTAL",
+    "sign": "202",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_202",
    "rows": [
@@ -1862,7 +1893,9 @@
    "portal": {
     "x": 658.9,
     "y": 1007,
-    "node": "L2_SECTION_203_PORTAL"
+    "node": "L2_SECTION_203_PORTAL",
+    "sign": "203",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_203",
    "rows": [
@@ -1921,7 +1954,9 @@
    "portal": {
     "x": 657.6,
     "y": 1779.2,
-    "node": "L2_SECTION_204_PORTAL"
+    "node": "L2_SECTION_204_PORTAL",
+    "sign": "204",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_204",
    "rows": [
@@ -2004,7 +2039,9 @@
    "portal": {
     "x": 666.7,
     "y": 2513.3,
-    "node": "L2_SECTION_205_PORTAL"
+    "node": "L2_SECTION_205_PORTAL",
+    "sign": "205",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_205",
    "rows": [
@@ -2147,7 +2184,9 @@
    "portal": {
     "x": 1074.3,
     "y": 3250.9,
-    "node": "L2_SECTION_206_PORTAL"
+    "node": "L2_SECTION_206_PORTAL",
+    "sign": "206",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_206",
    "rows": [
@@ -2290,7 +2329,9 @@
    "portal": {
     "x": 1639.8,
     "y": 3697.7,
-    "node": "L2_SECTION_207_PORTAL"
+    "node": "L2_SECTION_207_PORTAL",
+    "sign": "207",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_207",
    "rows": [
@@ -2377,7 +2418,9 @@
    "portal": {
     "x": 2823.8,
     "y": 4063.5,
-    "node": "L2_SECTION_208_PORTAL"
+    "node": "L2_SECTION_208_PORTAL",
+    "sign": "208",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_208",
    "rows": [
@@ -2436,7 +2479,9 @@
    "portal": {
     "x": 3581,
     "y": 4042.7,
-    "node": "L2_SECTION_209_PORTAL"
+    "node": "L2_SECTION_209_PORTAL",
+    "sign": "209",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_209",
    "rows": [
@@ -2579,7 +2624,9 @@
    "portal": {
     "x": 4541.9,
     "y": 3634.8,
-    "node": "L2_SECTION_210_PORTAL"
+    "node": "L2_SECTION_210_PORTAL",
+    "sign": "210",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_210",
    "rows": [
@@ -2726,7 +2773,9 @@
    "portal": {
     "x": 5115.1,
     "y": 3063.6,
-    "node": "L2_SECTION_211_PORTAL"
+    "node": "L2_SECTION_211_PORTAL",
+    "sign": "211",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_211",
    "rows": [
@@ -2801,7 +2850,9 @@
    "portal": {
     "x": 5513.5,
     "y": 2450.7,
-    "node": "L2_SECTION_212_PORTAL"
+    "node": "L2_SECTION_212_PORTAL",
+    "sign": "212",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_212",
    "rows": [
@@ -2864,7 +2915,9 @@
    "portal": {
     "x": 5515.2,
     "y": 1749,
-    "node": "L2_SECTION_213_PORTAL"
+    "node": "L2_SECTION_213_PORTAL",
+    "sign": "213",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_213",
    "rows": [
@@ -2927,7 +2980,9 @@
    "portal": {
     "x": 5507.6,
     "y": 923.7,
-    "node": "L2_SECTION_214_PORTAL"
+    "node": "L2_SECTION_214_PORTAL",
+    "sign": "214",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_214",
    "rows": [
@@ -2990,7 +3045,9 @@
    "portal": {
     "x": 5508.9,
     "y": 273.9,
-    "node": "L2_SECTION_215_PORTAL"
+    "node": "L2_SECTION_215_PORTAL",
+    "sign": "215",
+    "shared": false
    },
    "corridor_node": "L2_CORRIDOR_215",
    "rows": [
@@ -3049,7 +3106,9 @@
    "portal": {
     "x": 57.6,
     "y": 334.7,
-    "node": "L4_SECTION_402_PORTAL"
+    "node": "L4_SECTION_402_PORTAL",
+    "sign": "402",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_402",
    "rows": [
@@ -3114,7 +3173,9 @@
    "portal": {
     "x": 50,
     "y": 1002.7,
-    "node": "L4_SECTION_403_PORTAL"
+    "node": "L4_SECTION_403_PORTAL",
+    "sign": "403",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_403",
    "rows": [
@@ -3187,7 +3248,9 @@
    "portal": {
     "x": 48.8,
     "y": 1816.5,
-    "node": "L4_SECTION_404_PORTAL"
+    "node": "L4_SECTION_404_PORTAL",
+    "sign": "404",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_404",
    "rows": [
@@ -3277,7 +3340,9 @@
    "portal": {
     "x": 77.7,
     "y": 2676,
-    "node": "L4_SECTION_405_PORTAL"
+    "node": "L4_SECTION_405_PORTAL",
+    "sign": "405",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_405",
    "rows": [
@@ -3451,7 +3516,9 @@
    "portal": {
     "x": 608.4,
     "y": 3705.5,
-    "node": "L4_SECTION_406_PORTAL"
+    "node": "L4_SECTION_406_PORTAL",
+    "sign": "406",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_406",
    "rows": [
@@ -3625,7 +3692,9 @@
    "portal": {
     "x": 1455.9,
     "y": 4303.6,
-    "node": "L4_SECTION_407_PORTAL"
+    "node": "L4_SECTION_407_PORTAL",
+    "sign": "407",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_407",
    "rows": [
@@ -3712,7 +3781,9 @@
    "portal": {
     "x": 2334.1,
     "y": 4659.6,
-    "node": "L4_SECTION_408_PORTAL"
+    "node": "L4_SECTION_408_PORTAL",
+    "sign": "408",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_408",
    "rows": [
@@ -3774,7 +3845,9 @@
    "portal": {
     "x": 3182.8,
     "y": 4669,
-    "node": "L4_SECTION_409_PORTAL"
+    "node": "L4_SECTION_409_PORTAL",
+    "sign": "409",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_409",
    "rows": [
@@ -3868,7 +3941,9 @@
    "portal": {
     "x": 4061.5,
     "y": 4663.4,
-    "node": "L4_SECTION_410_PORTAL"
+    "node": "L4_SECTION_410_PORTAL",
+    "sign": "410",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_410",
    "rows": [
@@ -4038,7 +4113,9 @@
    "portal": {
     "x": 4960.6,
     "y": 4133.5,
-    "node": "L4_SECTION_411_PORTAL"
+    "node": "L4_SECTION_411_PORTAL",
+    "sign": "411",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_411",
    "rows": [
@@ -4216,7 +4293,9 @@
    "portal": {
     "x": 5676.8,
     "y": 3454.8,
-    "node": "L4_SECTION_412_PORTAL"
+    "node": "L4_SECTION_412_PORTAL",
+    "sign": "412",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_412",
    "rows": [
@@ -4319,7 +4398,9 @@
    "portal": {
     "x": 6117.6,
     "y": 2582.2,
-    "node": "L4_SECTION_413_PORTAL"
+    "node": "L4_SECTION_413_PORTAL",
+    "sign": "413",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_413",
    "rows": [
@@ -4385,7 +4466,9 @@
    "portal": {
     "x": 6079.1,
     "y": 1805.5,
-    "node": "L4_SECTION_414_PORTAL"
+    "node": "L4_SECTION_414_PORTAL",
+    "sign": "414",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_414",
    "rows": [
@@ -4450,7 +4533,9 @@
    "portal": {
     "x": 6078,
     "y": 889.1,
-    "node": "L4_SECTION_415_PORTAL"
+    "node": "L4_SECTION_415_PORTAL",
+    "sign": "415",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_415",
    "rows": [
@@ -4511,7 +4596,9 @@
    "portal": {
     "x": 6075.9,
     "y": 269.9,
-    "node": "L4_SECTION_416_PORTAL"
+    "node": "L4_SECTION_416_PORTAL",
+    "sign": "416",
+    "shared": false
    },
    "corridor_node": "L4_CORRIDOR_416",
    "rows": [
@@ -4596,7 +4683,9 @@
    "portal": {
     "x": 3065.5,
     "y": 2373,
-    "node": "L1_SECTION_VIP_PORTAL"
+    "node": "L1_SECTION_VIP_PORTAL",
+    "sign": "VIP",
+    "shared": false
    },
    "corridor_node": "L1_FLOOR_TUNNEL_VIP",
    "rows": [
@@ -4633,6 +4722,537 @@
     "seats": "exact_from_ticketing_seatmap",
     "portal": "modelled_floor_entrance"
    }
+  }
+ ],
+ "portals": [
+  {
+   "id": "L1_SECTION_112_PORTAL",
+   "level": 1,
+   "sign": "112",
+   "sections": [
+    "112"
+   ],
+   "shared": false,
+   "x": 5146.8,
+   "y": 2412.4,
+   "corridor_node": "L1_CORRIDOR_112"
+  },
+  {
+   "id": "L1_SECTION_111_PORTAL",
+   "level": 1,
+   "sign": "111",
+   "sections": [
+    "111"
+   ],
+   "shared": false,
+   "x": 4823.7,
+   "y": 2749.7,
+   "corridor_node": "L1_CORRIDOR_111"
+  },
+  {
+   "id": "L1_SECTION_110_PORTAL",
+   "level": 1,
+   "sign": "110",
+   "sections": [
+    "110"
+   ],
+   "shared": false,
+   "x": 4376.8,
+   "y": 3341,
+   "corridor_node": "L1_CORRIDOR_110"
+  },
+  {
+   "id": "L1_SECTION_109_PORTAL",
+   "level": 1,
+   "sign": "109",
+   "sections": [
+    "109"
+   ],
+   "shared": false,
+   "x": 3510.7,
+   "y": 3704.2,
+   "corridor_node": "L1_CORRIDOR_109"
+  },
+  {
+   "id": "L1_SECTION_108_PORTAL",
+   "level": 1,
+   "sign": "108",
+   "sections": [
+    "108"
+   ],
+   "shared": false,
+   "x": 2810.3,
+   "y": 3717.5,
+   "corridor_node": "L1_CORRIDOR_108"
+  },
+  {
+   "id": "L1_SECTION_107_PORTAL",
+   "level": 1,
+   "sign": "107",
+   "sections": [
+    "107"
+   ],
+   "shared": false,
+   "x": 1730.8,
+   "y": 3348.2,
+   "corridor_node": "L1_CORRIDOR_107"
+  },
+  {
+   "id": "L1_SECTION_106_PORTAL",
+   "level": 1,
+   "sign": "106",
+   "sections": [
+    "106"
+   ],
+   "shared": false,
+   "x": 1271.1,
+   "y": 2955.2,
+   "corridor_node": "L1_CORRIDOR_106"
+  },
+  {
+   "id": "L1_SECTION_105_PORTAL",
+   "level": 1,
+   "sign": "105",
+   "sections": [
+    "105"
+   ],
+   "shared": false,
+   "x": 1004.9,
+   "y": 2450.5,
+   "corridor_node": "L1_CORRIDOR_105"
+  },
+  {
+   "id": "L1_SECTION_104_PORTAL",
+   "level": 1,
+   "sign": "104",
+   "sections": [
+    "104"
+   ],
+   "shared": false,
+   "x": 1023.5,
+   "y": 1798,
+   "corridor_node": "L1_CORRIDOR_104"
+  },
+  {
+   "id": "L1_SECTION_103_PORTAL",
+   "level": 1,
+   "sign": "103",
+   "sections": [
+    "103"
+   ],
+   "shared": false,
+   "x": 1022.9,
+   "y": 971,
+   "corridor_node": "L1_CORRIDOR_103"
+  },
+  {
+   "id": "L1_SECTION_102_PORTAL",
+   "level": 1,
+   "sign": "102",
+   "sections": [
+    "102"
+   ],
+   "shared": false,
+   "x": 1018.9,
+   "y": 277.9,
+   "corridor_node": "L1_CORRIDOR_102"
+  },
+  {
+   "id": "L1_SECTION_115_PORTAL",
+   "level": 1,
+   "sign": "115",
+   "sections": [
+    "115"
+   ],
+   "shared": false,
+   "x": 5162.2,
+   "y": 287,
+   "corridor_node": "L1_CORRIDOR_115"
+  },
+  {
+   "id": "L1_SECTION_114_PORTAL",
+   "level": 1,
+   "sign": "114",
+   "sections": [
+    "114"
+   ],
+   "shared": false,
+   "x": 5193.2,
+   "y": 837,
+   "corridor_node": "L1_CORRIDOR_114"
+  },
+  {
+   "id": "L1_SECTION_113_PORTAL",
+   "level": 1,
+   "sign": "113",
+   "sections": [
+    "113"
+   ],
+   "shared": false,
+   "x": 5190.6,
+   "y": 1753.4,
+   "corridor_node": "L1_CORRIDOR_113"
+  },
+  {
+   "id": "L2_SECTION_212_PORTAL",
+   "level": 2,
+   "sign": "212",
+   "sections": [
+    "212"
+   ],
+   "shared": false,
+   "x": 5513.5,
+   "y": 2450.7,
+   "corridor_node": "L2_CORRIDOR_212"
+  },
+  {
+   "id": "L2_SECTION_211_PORTAL",
+   "level": 2,
+   "sign": "211",
+   "sections": [
+    "211"
+   ],
+   "shared": false,
+   "x": 5115.1,
+   "y": 3063.6,
+   "corridor_node": "L2_CORRIDOR_211"
+  },
+  {
+   "id": "L2_SECTION_210_PORTAL",
+   "level": 2,
+   "sign": "210",
+   "sections": [
+    "210"
+   ],
+   "shared": false,
+   "x": 4541.9,
+   "y": 3634.8,
+   "corridor_node": "L2_CORRIDOR_210"
+  },
+  {
+   "id": "L2_SECTION_209_PORTAL",
+   "level": 2,
+   "sign": "209",
+   "sections": [
+    "209"
+   ],
+   "shared": false,
+   "x": 3581,
+   "y": 4042.7,
+   "corridor_node": "L2_CORRIDOR_209"
+  },
+  {
+   "id": "L2_SECTION_208_PORTAL",
+   "level": 2,
+   "sign": "208",
+   "sections": [
+    "208"
+   ],
+   "shared": false,
+   "x": 2823.8,
+   "y": 4063.5,
+   "corridor_node": "L2_CORRIDOR_208"
+  },
+  {
+   "id": "L2_SECTION_207_PORTAL",
+   "level": 2,
+   "sign": "207",
+   "sections": [
+    "207"
+   ],
+   "shared": false,
+   "x": 1639.8,
+   "y": 3697.7,
+   "corridor_node": "L2_CORRIDOR_207"
+  },
+  {
+   "id": "L2_SECTION_206_PORTAL",
+   "level": 2,
+   "sign": "206",
+   "sections": [
+    "206"
+   ],
+   "shared": false,
+   "x": 1074.3,
+   "y": 3250.9,
+   "corridor_node": "L2_CORRIDOR_206"
+  },
+  {
+   "id": "L2_SECTION_205_PORTAL",
+   "level": 2,
+   "sign": "205",
+   "sections": [
+    "205"
+   ],
+   "shared": false,
+   "x": 666.7,
+   "y": 2513.3,
+   "corridor_node": "L2_CORRIDOR_205"
+  },
+  {
+   "id": "L2_SECTION_204_PORTAL",
+   "level": 2,
+   "sign": "204",
+   "sections": [
+    "204"
+   ],
+   "shared": false,
+   "x": 657.6,
+   "y": 1779.2,
+   "corridor_node": "L2_CORRIDOR_204"
+  },
+  {
+   "id": "L2_SECTION_203_PORTAL",
+   "level": 2,
+   "sign": "203",
+   "sections": [
+    "203"
+   ],
+   "shared": false,
+   "x": 658.9,
+   "y": 1007,
+   "corridor_node": "L2_CORRIDOR_203"
+  },
+  {
+   "id": "L2_SECTION_202_PORTAL",
+   "level": 2,
+   "sign": "202",
+   "sections": [
+    "202"
+   ],
+   "shared": false,
+   "x": 661.5,
+   "y": 275.6,
+   "corridor_node": "L2_CORRIDOR_202"
+  },
+  {
+   "id": "L2_SECTION_215_PORTAL",
+   "level": 2,
+   "sign": "215",
+   "sections": [
+    "215"
+   ],
+   "shared": false,
+   "x": 5508.9,
+   "y": 273.9,
+   "corridor_node": "L2_CORRIDOR_215"
+  },
+  {
+   "id": "L2_SECTION_214_PORTAL",
+   "level": 2,
+   "sign": "214",
+   "sections": [
+    "214"
+   ],
+   "shared": false,
+   "x": 5507.6,
+   "y": 923.7,
+   "corridor_node": "L2_CORRIDOR_214"
+  },
+  {
+   "id": "L2_SECTION_213_PORTAL",
+   "level": 2,
+   "sign": "213",
+   "sections": [
+    "213"
+   ],
+   "shared": false,
+   "x": 5515.2,
+   "y": 1749,
+   "corridor_node": "L2_CORRIDOR_213"
+  },
+  {
+   "id": "L4_SECTION_413_PORTAL",
+   "level": 4,
+   "sign": "413",
+   "sections": [
+    "413"
+   ],
+   "shared": false,
+   "x": 6117.6,
+   "y": 2582.2,
+   "corridor_node": "L4_CORRIDOR_413"
+  },
+  {
+   "id": "L4_SECTION_412_PORTAL",
+   "level": 4,
+   "sign": "412",
+   "sections": [
+    "412"
+   ],
+   "shared": false,
+   "x": 5676.8,
+   "y": 3454.8,
+   "corridor_node": "L4_CORRIDOR_412"
+  },
+  {
+   "id": "L4_SECTION_411_PORTAL",
+   "level": 4,
+   "sign": "411",
+   "sections": [
+    "411"
+   ],
+   "shared": false,
+   "x": 4960.6,
+   "y": 4133.5,
+   "corridor_node": "L4_CORRIDOR_411"
+  },
+  {
+   "id": "L4_SECTION_410_PORTAL",
+   "level": 4,
+   "sign": "410",
+   "sections": [
+    "410"
+   ],
+   "shared": false,
+   "x": 4061.5,
+   "y": 4663.4,
+   "corridor_node": "L4_CORRIDOR_410"
+  },
+  {
+   "id": "L4_SECTION_409_PORTAL",
+   "level": 4,
+   "sign": "409",
+   "sections": [
+    "409"
+   ],
+   "shared": false,
+   "x": 3182.8,
+   "y": 4669,
+   "corridor_node": "L4_CORRIDOR_409"
+  },
+  {
+   "id": "L4_SECTION_408_PORTAL",
+   "level": 4,
+   "sign": "408",
+   "sections": [
+    "408"
+   ],
+   "shared": false,
+   "x": 2334.1,
+   "y": 4659.6,
+   "corridor_node": "L4_CORRIDOR_408"
+  },
+  {
+   "id": "L4_SECTION_407_PORTAL",
+   "level": 4,
+   "sign": "407",
+   "sections": [
+    "407"
+   ],
+   "shared": false,
+   "x": 1455.9,
+   "y": 4303.6,
+   "corridor_node": "L4_CORRIDOR_407"
+  },
+  {
+   "id": "L4_SECTION_406_PORTAL",
+   "level": 4,
+   "sign": "406",
+   "sections": [
+    "406"
+   ],
+   "shared": false,
+   "x": 608.4,
+   "y": 3705.5,
+   "corridor_node": "L4_CORRIDOR_406"
+  },
+  {
+   "id": "L4_SECTION_405_PORTAL",
+   "level": 4,
+   "sign": "405",
+   "sections": [
+    "405"
+   ],
+   "shared": false,
+   "x": 77.7,
+   "y": 2676,
+   "corridor_node": "L4_CORRIDOR_405"
+  },
+  {
+   "id": "L4_SECTION_404_PORTAL",
+   "level": 4,
+   "sign": "404",
+   "sections": [
+    "404"
+   ],
+   "shared": false,
+   "x": 48.8,
+   "y": 1816.5,
+   "corridor_node": "L4_CORRIDOR_404"
+  },
+  {
+   "id": "L4_SECTION_403_PORTAL",
+   "level": 4,
+   "sign": "403",
+   "sections": [
+    "403"
+   ],
+   "shared": false,
+   "x": 50,
+   "y": 1002.7,
+   "corridor_node": "L4_CORRIDOR_403"
+  },
+  {
+   "id": "L4_SECTION_402_PORTAL",
+   "level": 4,
+   "sign": "402",
+   "sections": [
+    "402"
+   ],
+   "shared": false,
+   "x": 57.6,
+   "y": 334.7,
+   "corridor_node": "L4_CORRIDOR_402"
+  },
+  {
+   "id": "L4_SECTION_416_PORTAL",
+   "level": 4,
+   "sign": "416",
+   "sections": [
+    "416"
+   ],
+   "shared": false,
+   "x": 6075.9,
+   "y": 269.9,
+   "corridor_node": "L4_CORRIDOR_416"
+  },
+  {
+   "id": "L4_SECTION_415_PORTAL",
+   "level": 4,
+   "sign": "415",
+   "sections": [
+    "415"
+   ],
+   "shared": false,
+   "x": 6078,
+   "y": 889.1,
+   "corridor_node": "L4_CORRIDOR_415"
+  },
+  {
+   "id": "L4_SECTION_414_PORTAL",
+   "level": 4,
+   "sign": "414",
+   "sections": [
+    "414"
+   ],
+   "shared": false,
+   "x": 6079.1,
+   "y": 1805.5,
+   "corridor_node": "L4_CORRIDOR_414"
+  },
+  {
+   "id": "L1_SECTION_VIP_PORTAL",
+   "level": 1,
+   "sign": "VIP",
+   "sections": [
+    "VIP"
+   ],
+   "shared": false,
+   "floor": true,
+   "x": 3065.5,
+   "y": 2373,
+   "corridor_node": "L1_FLOOR_TUNNEL_VIP"
   }
  ],
  "seat_index": {
@@ -68565,6 +69185,10 @@
    "type": "portal",
    "level": 1,
    "section": "112",
+   "sections": [
+    "112"
+   ],
+   "sign": "112",
    "zone": "right",
    "x": 5146.8,
    "y": 2412.4,
@@ -68595,6 +69219,10 @@
    "type": "portal",
    "level": 1,
    "section": "111",
+   "sections": [
+    "111"
+   ],
+   "sign": "111",
    "zone": "rear_right",
    "x": 4823.7,
    "y": 2749.7,
@@ -68625,6 +69253,10 @@
    "type": "portal",
    "level": 1,
    "section": "110",
+   "sections": [
+    "110"
+   ],
+   "sign": "110",
    "zone": "rear_right",
    "x": 4376.8,
    "y": 3341,
@@ -68655,6 +69287,10 @@
    "type": "portal",
    "level": 1,
    "section": "109",
+   "sections": [
+    "109"
+   ],
+   "sign": "109",
    "zone": "rear",
    "x": 3510.7,
    "y": 3704.2,
@@ -68685,6 +69321,10 @@
    "type": "portal",
    "level": 1,
    "section": "108",
+   "sections": [
+    "108"
+   ],
+   "sign": "108",
    "zone": "rear",
    "x": 2810.3,
    "y": 3717.5,
@@ -68715,6 +69355,10 @@
    "type": "portal",
    "level": 1,
    "section": "107",
+   "sections": [
+    "107"
+   ],
+   "sign": "107",
    "zone": "rear_left",
    "x": 1730.8,
    "y": 3348.2,
@@ -68745,6 +69389,10 @@
    "type": "portal",
    "level": 1,
    "section": "106",
+   "sections": [
+    "106"
+   ],
+   "sign": "106",
    "zone": "rear_left",
    "x": 1271.1,
    "y": 2955.2,
@@ -68775,6 +69423,10 @@
    "type": "portal",
    "level": 1,
    "section": "105",
+   "sections": [
+    "105"
+   ],
+   "sign": "105",
    "zone": "left",
    "x": 1004.9,
    "y": 2450.5,
@@ -68805,6 +69457,10 @@
    "type": "portal",
    "level": 1,
    "section": "104",
+   "sections": [
+    "104"
+   ],
+   "sign": "104",
    "zone": "left",
    "x": 1023.5,
    "y": 1798,
@@ -68835,6 +69491,10 @@
    "type": "portal",
    "level": 1,
    "section": "103",
+   "sections": [
+    "103"
+   ],
+   "sign": "103",
    "zone": "front_left",
    "x": 1022.9,
    "y": 971,
@@ -68865,6 +69525,10 @@
    "type": "portal",
    "level": 1,
    "section": "102",
+   "sections": [
+    "102"
+   ],
+   "sign": "102",
    "zone": "front_left",
    "x": 1018.9,
    "y": 277.9,
@@ -68895,6 +69559,10 @@
    "type": "portal",
    "level": 1,
    "section": "115",
+   "sections": [
+    "115"
+   ],
+   "sign": "115",
    "zone": "front_right",
    "x": 5162.2,
    "y": 287,
@@ -68925,6 +69593,10 @@
    "type": "portal",
    "level": 1,
    "section": "114",
+   "sections": [
+    "114"
+   ],
+   "sign": "114",
    "zone": "front_right",
    "x": 5193.2,
    "y": 837,
@@ -68955,6 +69627,10 @@
    "type": "portal",
    "level": 1,
    "section": "113",
+   "sections": [
+    "113"
+   ],
+   "sign": "113",
    "zone": "right",
    "x": 5190.6,
    "y": 1753.4,
@@ -69033,6 +69709,10 @@
    "type": "portal",
    "level": 2,
    "section": "212",
+   "sections": [
+    "212"
+   ],
+   "sign": "212",
    "zone": "right",
    "x": 5513.5,
    "y": 2450.7,
@@ -69063,6 +69743,10 @@
    "type": "portal",
    "level": 2,
    "section": "211",
+   "sections": [
+    "211"
+   ],
+   "sign": "211",
    "zone": "rear_right",
    "x": 5115.1,
    "y": 3063.6,
@@ -69093,6 +69777,10 @@
    "type": "portal",
    "level": 2,
    "section": "210",
+   "sections": [
+    "210"
+   ],
+   "sign": "210",
    "zone": "rear_right",
    "x": 4541.9,
    "y": 3634.8,
@@ -69123,6 +69811,10 @@
    "type": "portal",
    "level": 2,
    "section": "209",
+   "sections": [
+    "209"
+   ],
+   "sign": "209",
    "zone": "rear",
    "x": 3581,
    "y": 4042.7,
@@ -69153,6 +69845,10 @@
    "type": "portal",
    "level": 2,
    "section": "208",
+   "sections": [
+    "208"
+   ],
+   "sign": "208",
    "zone": "rear",
    "x": 2823.8,
    "y": 4063.5,
@@ -69183,6 +69879,10 @@
    "type": "portal",
    "level": 2,
    "section": "207",
+   "sections": [
+    "207"
+   ],
+   "sign": "207",
    "zone": "rear_left",
    "x": 1639.8,
    "y": 3697.7,
@@ -69213,6 +69913,10 @@
    "type": "portal",
    "level": 2,
    "section": "206",
+   "sections": [
+    "206"
+   ],
+   "sign": "206",
    "zone": "rear_left",
    "x": 1074.3,
    "y": 3250.9,
@@ -69243,6 +69947,10 @@
    "type": "portal",
    "level": 2,
    "section": "205",
+   "sections": [
+    "205"
+   ],
+   "sign": "205",
    "zone": "left",
    "x": 666.7,
    "y": 2513.3,
@@ -69273,6 +69981,10 @@
    "type": "portal",
    "level": 2,
    "section": "204",
+   "sections": [
+    "204"
+   ],
+   "sign": "204",
    "zone": "left",
    "x": 657.6,
    "y": 1779.2,
@@ -69303,6 +70015,10 @@
    "type": "portal",
    "level": 2,
    "section": "203",
+   "sections": [
+    "203"
+   ],
+   "sign": "203",
    "zone": "left",
    "x": 658.9,
    "y": 1007,
@@ -69333,6 +70049,10 @@
    "type": "portal",
    "level": 2,
    "section": "202",
+   "sections": [
+    "202"
+   ],
+   "sign": "202",
    "zone": "front_left",
    "x": 661.5,
    "y": 275.6,
@@ -69363,6 +70083,10 @@
    "type": "portal",
    "level": 2,
    "section": "215",
+   "sections": [
+    "215"
+   ],
+   "sign": "215",
    "zone": "front_right",
    "x": 5508.9,
    "y": 273.9,
@@ -69393,6 +70117,10 @@
    "type": "portal",
    "level": 2,
    "section": "214",
+   "sections": [
+    "214"
+   ],
+   "sign": "214",
    "zone": "right",
    "x": 5507.6,
    "y": 923.7,
@@ -69423,6 +70151,10 @@
    "type": "portal",
    "level": 2,
    "section": "213",
+   "sections": [
+    "213"
+   ],
+   "sign": "213",
    "zone": "right",
    "x": 5515.2,
    "y": 1749,
@@ -69501,6 +70233,10 @@
    "type": "portal",
    "level": 4,
    "section": "413",
+   "sections": [
+    "413"
+   ],
+   "sign": "413",
    "zone": "right",
    "x": 6117.6,
    "y": 2582.2,
@@ -69531,6 +70267,10 @@
    "type": "portal",
    "level": 4,
    "section": "412",
+   "sections": [
+    "412"
+   ],
+   "sign": "412",
    "zone": "rear_right",
    "x": 5676.8,
    "y": 3454.8,
@@ -69561,6 +70301,10 @@
    "type": "portal",
    "level": 4,
    "section": "411",
+   "sections": [
+    "411"
+   ],
+   "sign": "411",
    "zone": "rear_right",
    "x": 4960.6,
    "y": 4133.5,
@@ -69591,6 +70335,10 @@
    "type": "portal",
    "level": 4,
    "section": "410",
+   "sections": [
+    "410"
+   ],
+   "sign": "410",
    "zone": "rear",
    "x": 4061.5,
    "y": 4663.4,
@@ -69621,6 +70369,10 @@
    "type": "portal",
    "level": 4,
    "section": "409",
+   "sections": [
+    "409"
+   ],
+   "sign": "409",
    "zone": "rear",
    "x": 3182.8,
    "y": 4669,
@@ -69651,6 +70403,10 @@
    "type": "portal",
    "level": 4,
    "section": "408",
+   "sections": [
+    "408"
+   ],
+   "sign": "408",
    "zone": "rear",
    "x": 2334.1,
    "y": 4659.6,
@@ -69681,6 +70437,10 @@
    "type": "portal",
    "level": 4,
    "section": "407",
+   "sections": [
+    "407"
+   ],
+   "sign": "407",
    "zone": "rear_left",
    "x": 1455.9,
    "y": 4303.6,
@@ -69711,6 +70471,10 @@
    "type": "portal",
    "level": 4,
    "section": "406",
+   "sections": [
+    "406"
+   ],
+   "sign": "406",
    "zone": "rear_left",
    "x": 608.4,
    "y": 3705.5,
@@ -69741,6 +70505,10 @@
    "type": "portal",
    "level": 4,
    "section": "405",
+   "sections": [
+    "405"
+   ],
+   "sign": "405",
    "zone": "left",
    "x": 77.7,
    "y": 2676,
@@ -69771,6 +70539,10 @@
    "type": "portal",
    "level": 4,
    "section": "404",
+   "sections": [
+    "404"
+   ],
+   "sign": "404",
    "zone": "left",
    "x": 48.8,
    "y": 1816.5,
@@ -69801,6 +70573,10 @@
    "type": "portal",
    "level": 4,
    "section": "403",
+   "sections": [
+    "403"
+   ],
+   "sign": "403",
    "zone": "left",
    "x": 50,
    "y": 1002.7,
@@ -69831,6 +70607,10 @@
    "type": "portal",
    "level": 4,
    "section": "402",
+   "sections": [
+    "402"
+   ],
+   "sign": "402",
    "zone": "front_left",
    "x": 57.6,
    "y": 334.7,
@@ -69861,6 +70641,10 @@
    "type": "portal",
    "level": 4,
    "section": "416",
+   "sections": [
+    "416"
+   ],
+   "sign": "416",
    "zone": "front_right",
    "x": 6075.9,
    "y": 269.9,
@@ -69891,6 +70675,10 @@
    "type": "portal",
    "level": 4,
    "section": "415",
+   "sections": [
+    "415"
+   ],
+   "sign": "415",
    "zone": "right",
    "x": 6078,
    "y": 889.1,
@@ -69921,6 +70709,10 @@
    "type": "portal",
    "level": 4,
    "section": "414",
+   "sections": [
+    "414"
+   ],
+   "sign": "414",
    "zone": "right",
    "x": 6079.1,
    "y": 1805.5,

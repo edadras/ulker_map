@@ -566,9 +566,9 @@
             title: section.floor
               ? { fa: `وارد محوطه ${section.section} (کف سالن) شوید`, en: `Enter the ${section.section} floor area`, tr: `${section.section} zemin alanına girin` }
               : {
-                fa: `از ورودی سکشن ${section.section} وارد شوید`,
-                en: `Enter through the section ${section.section} portal`,
-                tr: `${section.section} blok girişinden girin`
+                fa: `از ورودی سکشن با تابلوی «${section.portal.sign || section.section}» وارد شوید`,
+                en: `Enter through the section portal signed “${section.portal.sign || section.section}”`,
+                tr: `“${section.portal.sign || section.section}” tabelalı blok girişinden girin`
               },
             detail: section.floor
               ? { fa: 'ورودی کف سالن در انتهای عقبی محوطه، روبه‌روی صحنه است.', en: 'The floor entrance is at the rear of the floor, facing the stage.', tr: 'Zemin girişi alanın arkasında, sahneye bakar.' }

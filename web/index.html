@@ -2,111 +2,128 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1420">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>مسیریاب سالن Ülker – از بلیط تا صندلی</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <h1>🏟️ مسیریاب سالن Ülker</h1>
-      <p class="sub">Ülker Spor ve Etkinlik Salonu · از بلیط تا صندلی — ورودی، کنترل امنیتی، طبقه، راهرو، سکشن، ردیف، صندلی</p>
+    <button type="button" id="btnBack" class="iconBtn hidden" aria-label="ویرایش بلیط">✏️</button>
+    <div class="brand">
+      <h1>🏟️ مسیریاب Ülker Arena</h1>
+      <p class="sub" id="subTitle">از بلیط تا صندلی</p>
     </div>
-    <div class="badge warn" title="صندلی‌ها از نقشه سیستم بلیت‌فروشی (دقیق)؛ راهروها، پله‌ها و ورودی‌ها مدل‌سازی‌شده">صندلی‌ها: نقشه سیستم بلیت · راهرو/ورودی: مدل‌سازی‌شده</div>
+    <select id="lang" class="langSel" aria-label="زبان">
+      <option value="fa">FA</option>
+      <option value="en">EN</option>
+      <option value="tr">TR</option>
+    </select>
   </header>
 
-  <main class="layout">
-    <aside class="panel">
-      <form id="ticketForm" autocomplete="off">
-        <h2>🎫 مشخصات بلیط</h2>
+  <main class="app">
+    <!-- ───────── screen 1: ticket ───────── -->
+    <section id="screenTicket" class="screen">
+      <form id="ticketForm" class="card" autocomplete="off">
+        <h2 data-i18n="ticketTitle">🎫 بلیط شما</h2>
+        <label class="field">
+          <span data-i18n="section">سکشن</span>
+          <select name="section" id="section" required></select>
+        </label>
         <div class="grid2">
-          <label>شناسه رویداد <input name="event_id" id="event_id" placeholder="123" inputmode="numeric"></label>
-          <label>سکشن <select name="section" id="section" required></select></label>
-          <label>ردیف <input name="row" id="row" placeholder="L" list="rows"></label>
-          <label>صندلی <input name="seat" id="seat" placeholder="1" inputmode="numeric" list="seats"></label>
+          <label class="field"><span data-i18n="row">ردیف</span><input name="row" id="row" placeholder="L" list="rows" autocapitalize="characters"></label>
+          <label class="field"><span data-i18n="seat">صندلی</span><input name="seat" id="seat" placeholder="1" inputmode="numeric" list="seats"></label>
         </div>
         <datalist id="rows"></datalist>
         <datalist id="seats"></datalist>
         <p id="seatInfo" class="seatInfo"></p>
-        <label>ورودی (KAPI) روی بلیط
-          <select name="gate" id="gate">
-            <option value="">— خودکار: ورودی مخصوص طبقهٔ سکشن —</option>
-          </select>
-        </label>
-        <label class="check"><input type="checkbox" id="accessible" name="accessible"> مسیر بدون پله (فقط آسانسور)</label>
 
-        <h2>📍 موقعیت شما (اختیاری)</h2>
-        <div class="gpsRow">
-          <button type="button" id="btnGps" class="secondary">📡 استفاده از GPS</button>
-          <button type="button" id="btnDemo" class="ghost" title="ایستگاه اتوبوس بلوار Ihlamur، شرق سالن">شبیه‌سازی</button>
-          <button type="button" id="btnClearGps" class="ghost">پاک کردن</button>
-        </div>
-        <div class="grid2">
-          <label>عرض جغرافیایی <input name="lat" id="lat" placeholder="40.99" inputmode="decimal"></label>
-          <label>طول جغرافیایی <input name="lon" id="lon" placeholder="29.10" inputmode="decimal"></label>
-        </div>
-        <p id="gpsStatus" class="muted"></p>
-
-        <div class="actions">
-          <label class="inline">زبان راهنما
-            <select id="lang">
-              <option value="fa">فارسی</option>
-              <option value="en">English</option>
-              <option value="tr">Türkçe</option>
+        <details class="more">
+          <summary data-i18n="more">گزینه‌های بیشتر (ورودی روی بلیط، رویداد، مسیر بدون پله)</summary>
+          <label class="field">
+            <span data-i18n="gate">ورودی (KAPI) روی بلیط</span>
+            <select name="gate" id="gate">
+              <option value="" data-i18n="gateAuto">— خودکار: ورودی مخصوص طبقهٔ سکشن —</option>
             </select>
           </label>
-          <button type="submit" id="btnRoute">🧭 مسیر را نشان بده</button>
-        </div>
-      </form>
-
-      <section id="result" class="hidden">
-        <div id="summary" class="summary"></div>
-        <div id="warnings"></div>
-        <ol id="steps" class="steps"></ol>
-        <details class="json">
-          <summary>خروجی JSON (برای اپ / بک‌اند)</summary>
-          <pre id="json"></pre>
+          <label class="field"><span data-i18n="event">شناسه رویداد</span><input name="event_id" id="event_id" placeholder="123" inputmode="numeric"></label>
+          <label class="check"><input type="checkbox" id="accessible" name="accessible"> <span data-i18n="accessible">مسیر بدون پله (فقط آسانسور)</span></label>
         </details>
-      </section>
-      <p id="error" class="error hidden"></p>
-    </aside>
 
-    <section class="mapArea">
-      <div class="toolbar">
-        <div class="levels">
-          <button type="button" data-level="all" class="active">همه طبقات</button>
-          <button type="button" data-level="1">طبقه ۱ (۱۰۰ + VIP)</button>
-          <button type="button" data-level="2">طبقه ۲ (۲۰۰)</button>
-          <button type="button" data-level="4">طبقه ۴ (۴۰۰)</button>
+        <div class="gpsBox">
+          <div class="gpsRow">
+            <button type="button" id="btnGps" class="secondary" data-i18n="useGps">📡 موقعیت من</button>
+            <button type="button" id="btnDemo" class="ghost" data-i18n="demo">شبیه‌سازی</button>
+            <button type="button" id="btnClearGps" class="ghost" data-i18n="clear">پاک</button>
+          </div>
+          <p id="gpsStatus" class="muted" data-i18n="gpsHint">برای مسیر پیاده از خیابان تا ورودی، موقعیت خود را بدهید (اختیاری).</p>
+          <details class="more">
+            <summary data-i18n="manualCoords">وارد کردن مختصات دستی</summary>
+            <div class="grid2">
+              <label class="field"><span>Lat</span><input name="lat" id="lat" placeholder="40.993" inputmode="decimal"></label>
+              <label class="field"><span>Lon</span><input name="lon" id="lon" placeholder="29.105" inputmode="decimal"></label>
+            </div>
+          </details>
         </div>
-        <div class="viewBtns">
-          <button type="button" id="btnFit" class="ghost">🔍 نمای مسیر</button>
-          <button type="button" id="btnSeat" class="ghost">💺 نمای سکشن/صندلی</button>
-          <button type="button" id="btnReset" class="ghost">↺ کل سالن</button>
+
+        <button type="submit" id="btnRoute" class="primary big" data-i18n="go">🧭 مسیر تا صندلی من</button>
+      </form>
+      <p id="error" class="error hidden"></p>
+      <p class="foot" data-i18n="footer">✅ صندلی‌ها دقیقاً از نقشهٔ سیستم بلیت. ⚠️ راهروها، پله‌ها و ورودی سکشن‌ها مدل‌سازی شده‌اند.</p>
+    </section>
+
+    <!-- ───────── screen 2: route ───────── -->
+    <section id="screenRoute" class="screen hidden">
+      <div class="summaryBar" id="summary"></div>
+
+      <div class="mapBox">
+        <div class="mapTabs">
+          <button type="button" id="tabIndoor" class="active" data-i18n="tabIndoor">🏟️ داخل سالن</button>
+          <button type="button" id="tabStreet" data-i18n="tabStreet">🗺️ خیابان تا ورودی</button>
+        </div>
+        <div class="mapWrap" id="indoorPane">
+          <svg id="map" viewBox="-900 -700 8000 6000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="نقشه سالن"></svg>
+          <div class="levels" id="levelChips">
+            <button type="button" data-level="all" class="active" data-i18n="allLevels">همه</button>
+            <button type="button" data-level="1">100+VIP</button>
+            <button type="button" data-level="2">200</button>
+            <button type="button" data-level="4">400</button>
+          </div>
+          <div class="mapLegend" id="mapLegend"></div>
+          <div class="viewBtns">
+            <button type="button" id="btnFit" class="mapBtn" title="نمای مسیر">🔍</button>
+            <button type="button" id="btnSeat" class="mapBtn" title="صندلی">💺</button>
+            <button type="button" id="btnReset" class="mapBtn" title="کل سالن">↺</button>
+          </div>
+        </div>
+        <div class="outdoorPane hidden" id="outdoorPane">
+          <div id="leaflet" class="leaflet"></div>
+          <div id="outdoorInfo" class="outdoorInfo"></div>
         </div>
       </div>
-      <div class="mapWrap">
-        <svg id="map" viewBox="-900 -700 8000 6000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="نقشه سالن"></svg>
-        <div class="legend">
-          <span><i style="background:#2a9d8f"></i> طبقه ۱</span>
-          <span><i style="background:#e9c46a"></i> طبقه ۲</span>
-          <span><i style="background:#e76f51"></i> طبقه ۴</span>
-          <span><i style="background:#9b5de5"></i> VIP (کف سالن)</span>
-          <span><i class="dash"></i> راهرو</span>
-          <span>⇅ پله/آسانسور</span>
-          <span>★ صندلی شما</span>
-        </div>
-      </div>
-      <div id="outdoor" class="outdoor hidden">
-        <div id="outdoorInfo" class="outdoorInfo"></div>
-        <div id="leaflet" class="leaflet"></div>
-      </div>
+
+      <div id="warnings"></div>
+      <ol id="steps" class="steps"></ol>
+      <details class="json">
+        <summary>JSON</summary>
+        <pre id="json"></pre>
+      </details>
     </section>
   </main>
 
-  <footer class="foot">
-    <p>✅ موقعیت سکشن‌ها، ردیف‌ها و صندلی‌ها دقیقاً از نقشه صندلی سیستم بلیت‌فروشی است. ⚠️ موقعیت سه ورودی سالن (۴۰۰ / VIP / ۱۰۰–۲۰۰) و مسیر پیاده از خیابان تا هر ورودی از پین‌ها و نقشه‌های برگزارکننده است. ⚠️ ورودی سکشن‌ها، راهروها، پله‌ها و آسانسورها از روی همان هندسه مدل‌سازی شده‌اند و مقیاس متری و جهت شمال تخمینی است؛ برای نسخه عملیاتی باید با نقشه معماری یا بازدید میدانی تطبیق داده شوند.</p>
-  </footer>
+  <!-- sticky step navigator (route screen) -->
+  <nav id="stepNav" class="stepNav hidden">
+    <button type="button" id="btnPrev" class="navBtn" aria-label="قبلی">‹</button>
+    <div class="navBody">
+      <div class="navMeta"><span id="navCount"></span><span id="navDist"></span></div>
+      <div class="navTitle" id="navTitle"></div>
+      <div class="navDetail" id="navDetail"></div>
+    </div>
+    <button type="button" id="btnNext" class="navBtn primary" aria-label="بعدی">›</button>
+  </nav>
 
   <script src="graph.data.js"></script>
   <script src="../src/router.js"></script>

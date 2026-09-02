@@ -1,4 +1,4 @@
-/* Ülker Arena wayfinding UI – vanilla JS, no build step. Map units are the ticketing-canvas units. */
+/* Ülker Arena wayfinding UI – mobile-first, vanilla JS, no build step. Map units are the ticketing-canvas units. */
 (function () {
   'use strict';
 
@@ -9,7 +9,7 @@
   const LEVEL_COLORS = { 0: '#8d99ae', 1: '#2a9d8f', 2: '#e9c46a', 4: '#e76f51' };
   const PAD = 320;
   const B = G.bounds;
-  const DEFAULT_VIEWBOX = `${B.minX - PAD} ${B.minY - PAD} ${B.maxX - B.minX + 2 * PAD} ${B.maxY - B.minY + 2 * PAD}`;
+  const DEFAULT_VB = { x: B.minX - PAD, y: B.minY - PAD, w: B.maxX - B.minX + 2 * PAD, h: B.maxY - B.minY + 2 * PAD };
   const APPROACH_COLORS = { red: '#ff5c5c', yellow: '#ffd166', blue: '#4f8cff' };
   const STATUS_NAME = {
     sold: { fa: 'فروخته‌شده', en: 'sold', tr: 'satıldı' },
@@ -17,35 +17,58 @@
     free: { fa: 'آزاد', en: 'free', tr: 'boş' },
     payment_in_progress: { fa: 'در حال پرداخت', en: 'payment in progress', tr: 'ödeme sürüyor' }
   };
+  const I18N = {
+    fa: {
+      ticketTitle: '🎫 بلیط شما', section: 'سکشن', row: 'ردیف', seat: 'صندلی', more: 'گزینه‌های بیشتر (ورودی روی بلیط، رویداد، مسیر بدون پله)',
+      gate: 'ورودی (KAPI) روی بلیط', gateAuto: '— خودکار: ورودی مخصوص طبقهٔ سکشن —', event: 'شناسه رویداد', accessible: 'مسیر بدون پله (فقط آسانسور)',
+      useGps: '📡 موقعیت من', demo: 'شبیه‌سازی', clear: 'پاک', gpsHint: 'برای مسیر پیاده از خیابان تا ورودی، موقعیت خود را بدهید (اختیاری).',
+      manualCoords: 'وارد کردن مختصات دستی', go: '🧭 مسیر تا صندلی من', footer: '✅ صندلی‌ها دقیقاً از نقشهٔ سیستم بلیت. ⚠️ راهروها، پله‌ها و ورودی سکشن‌ها مدل‌سازی شده‌اند.',
+      tabIndoor: '🏟️ داخل سالن', tabStreet: '🗺️ خیابان تا ورودی', allLevels: 'همه', sub: 'از بلیط تا صندلی', subRoute: 'مسیر شما',
+      gateT: 'ورودی', level: 'طبقه', srs: 'سکشن / ردیف / صندلی', indoor: 'پیاده‌روی داخل سالن', total: 'زمان کل (با صف)', seatStatus: 'وضعیت صندلی', source: 'منبع: ',
+      rows: 'ردیف', seats: 'صندلی', legendCorr: 'راهرو', legendStairs: 'پله/آسانسور', legendSeat: 'صندلی شما', legendPortal: 'ورودی سکشن',
+      stepOf: (i, n) => `گام ${fmtN(i)} از ${fmtN(n)}`, min: 'دقیقه', walkTo: 'پیاده تا', straight: 'خط مستقیم', bearing: 'جهت اولیه', minWalk: 'دقیقه پیاده',
+      openMaps: 'باز کردن در Google Maps ↗', offline: '(نقشه خیابانی در دسترس نیست – آفلاین)', you: 'شما', gpsNo: 'مرورگر شما از GPS پشتیبانی نمی‌کند.',
+      gpsWait: '⏳ در حال دریافت موقعیت…', gpsOk: (a) => `✅ موقعیت دریافت شد (دقت ≈ ${a} m)`, gpsErr: '⛔ دسترسی به موقعیت ممکن نشد: ',
+      demoMsg: 'موقعیت شبیه‌سازی‌شده: ایستگاه اتوبوس بلوار Ihlamur (شرق سالن).', elev: ' (آسانسور دارد)', stairsOnly: ' (فقط پله)', stairs: 'پله', elevator: 'آسانسور',
+      corridorOf: (l) => `راهروی طبقه ${fmtN(l)}`, north: 'شمال (تخمینی)', edit: 'ویرایش بلیط', seatInfo: (r, f, b, n) => `${fmtN(r)} ردیف (${f} جلو … ${b} کنار ورودی)، ${fmtN(n)} صندلی`
+    },
+    en: {
+      ticketTitle: '🎫 Your ticket', section: 'Section', row: 'Row', seat: 'Seat', more: 'More options (gate on the ticket, event, step-free route)',
+      gate: 'Gate (KAPI) on the ticket', gateAuto: '— automatic: the entrance for this section’s level —', event: 'Event id', accessible: 'Step-free route (elevator only)',
+      useGps: '📡 My location', demo: 'Demo', clear: 'Clear', gpsHint: 'Share your position for the walk from the street to the entrance (optional).',
+      manualCoords: 'Enter coordinates manually', go: '🧭 Route to my seat', footer: '✅ Seats exactly from the ticketing seat map. ⚠️ Concourses, stairs and section portals are modelled.',
+      tabIndoor: '🏟️ Inside the arena', tabStreet: '🗺️ Street to entrance', allLevels: 'All', sub: 'from ticket to seat', subRoute: 'Your route',
+      gateT: 'Entrance', level: 'Level', srs: 'Section / Row / Seat', indoor: 'Indoor walk', total: 'Total time (incl. queues)', seatStatus: 'Seat status', source: 'source: ',
+      rows: 'rows', seats: 'seats', legendCorr: 'concourse', legendStairs: 'stairs/elevator', legendSeat: 'your seat', legendPortal: 'section portal',
+      stepOf: (i, n) => `Step ${i} of ${n}`, min: 'min', walkTo: 'Walk to', straight: 'straight line', bearing: 'Initial bearing', minWalk: 'min walk',
+      openMaps: 'Open in Google Maps ↗', offline: '(street map unavailable – offline)', you: 'You', gpsNo: 'Your browser does not support geolocation.',
+      gpsWait: '⏳ Getting your position…', gpsOk: (a) => `✅ Position acquired (accuracy ≈ ${a} m)`, gpsErr: '⛔ Could not get your position: ',
+      demoMsg: 'Simulated position: Ihlamur Blv. bus stop (east of the arena).', elev: ' (elevator)', stairsOnly: ' (stairs only)', stairs: 'stairs', elevator: 'elevator',
+      corridorOf: (l) => `Level ${l} concourse`, north: 'North (estimated)', edit: 'Edit ticket', seatInfo: (r, f, b, n) => `${r} rows (${f} front … ${b} at the portal), ${n} seats`
+    },
+    tr: {
+      ticketTitle: '🎫 Biletiniz', section: 'Blok', row: 'Sıra', seat: 'Koltuk', more: 'Diğer seçenekler (biletteki kapı, etkinlik, merdivensiz rota)',
+      gate: 'Biletteki kapı (KAPI)', gateAuto: '— otomatik: bloğun katına ait giriş —', event: 'Etkinlik no', accessible: 'Merdivensiz rota (sadece asansör)',
+      useGps: '📡 Konumum', demo: 'Deneme', clear: 'Temizle', gpsHint: 'Sokaktan girişe yürüyüş için konumunuzu paylaşın (isteğe bağlı).',
+      manualCoords: 'Koordinatları elle girin', go: '🧭 Koltuğuma git', footer: '✅ Koltuklar bilet sisteminin planından. ⚠️ Koridorlar, merdivenler ve blok girişleri modellenmiştir.',
+      tabIndoor: '🏟️ Salon içi', tabStreet: '🗺️ Sokaktan girişe', allLevels: 'Tümü', sub: 'biletten koltuğa', subRoute: 'Rotanız',
+      gateT: 'Giriş', level: 'Kat', srs: 'Blok / Sıra / Koltuk', indoor: 'Salon içi yürüyüş', total: 'Toplam süre', seatStatus: 'Koltuk durumu', source: 'kaynak: ',
+      rows: 'sıra', seats: 'koltuk', legendCorr: 'koridor', legendStairs: 'merdiven/asansör', legendSeat: 'koltuğunuz', legendPortal: 'blok girişi',
+      stepOf: (i, n) => `Adım ${i} / ${n}`, min: 'dk', walkTo: 'Yürüyüş:', straight: 'kuş uçuşu', bearing: 'İlk yön', minWalk: 'dk yürüyüş',
+      openMaps: 'Google Maps’te aç ↗', offline: '(sokak haritası yok – çevrimdışı)', you: 'Siz', gpsNo: 'Tarayıcınız konum desteklemiyor.',
+      gpsWait: '⏳ Konum alınıyor…', gpsOk: (a) => `✅ Konum alındı (doğruluk ≈ ${a} m)`, gpsErr: '⛔ Konum alınamadı: ',
+      demoMsg: 'Simüle konum: Ihlamur Blv. durağı (salonun doğusu).', elev: ' (asansör)', stairsOnly: ' (sadece merdiven)', stairs: 'merdiven', elevator: 'asansör',
+      corridorOf: (l) => `Kat ${l} koridoru`, north: 'Kuzey (tahmini)', edit: 'Bileti düzenle', seatInfo: (r, f, b, n) => `${r} sıra (${f} ön … ${b} girişte), ${n} koltuk`
+    }
+  };
 
   const $ = (id) => document.getElementById(id);
   const svg = $('map');
   let lang = 'fa';
   let lastResult = null;
-  let leafletMap = null;
-  let leafletLayer = null;
-  let leafletPromise = null;
+  let currentStep = -1;
   let gpsAccuracy = null;
-
-  /** Lazily load Leaflet from the CDN; resolves false when offline so the indoor map never depends on it. */
-  function ensureLeaflet() {
-    if (window.L) return Promise.resolve(true);
-    if (leafletPromise) return leafletPromise;
-    leafletPromise = new Promise((resolve) => {
-      const done = (ok) => { clearTimeout(timer); resolve(ok); };
-      const timer = setTimeout(() => done(false), 8000);
-      const css = document.createElement('link');
-      css.rel = 'stylesheet';
-      css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
-      document.head.appendChild(css);
-      const js = document.createElement('script');
-      js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-      js.onload = () => done(!!window.L);
-      js.onerror = () => done(false);
-      document.head.appendChild(js);
-    });
-    return leafletPromise;
-  }
+  let leafletMap = null, leafletLayer = null, leafletPromise = null;
 
   // ------------------------------------------------------------------ helpers
   function el(tag, attrs, parent, text) {
@@ -62,11 +85,91 @@
     if (parent) parent.appendChild(e);
     return e;
   }
-  const fmt = (v) => new Intl.NumberFormat(lang === 'fa' ? 'fa-IR' : lang === 'tr' ? 'tr-TR' : 'en-US').format(v);
+  const fmtN = (v) => new Intl.NumberFormat(lang === 'fa' ? 'fa-IR' : lang === 'tr' ? 'tr-TR' : 'en-US').format(v);
+  const T = (k, ...a) => { const v = (I18N[lang] || I18N.en)[k]; return typeof v === 'function' ? v(...a) : (v != null ? v : I18N.en[k]); };
   const zoneText = (zone) => (ZONE_NAMES[zone] ? ZONE_NAMES[zone][lang] || ZONE_NAMES[zone].en : zone);
   const nodeById = (id) => G.nodes.find((x) => x.id === id);
   const pts = (list) => list.map((p) => `${p.x},${p.y}`).join(' ');
-  const t = (fa, en, tr) => (lang === 'fa' ? fa : lang === 'tr' ? tr : en);
+
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach((e) => { e.textContent = T(e.dataset.i18n); });
+    $('subTitle').textContent = lastResult ? T('subRoute') : T('sub');
+    $('btnBack').title = T('edit');
+    $('mapLegend').innerHTML = '';
+    for (const [c, l] of [['#2a9d8f', '100'], ['#e9c46a', '200'], ['#e76f51', '400'], ['#9b5de5', 'VIP']]) { const s = html('span', null, l, $('mapLegend')); const i = document.createElement('i'); i.style.background = c; s.prepend(i); }
+    for (const k of ['legendCorr', 'legendStairs', 'legendPortal', 'legendSeat']) {
+      const s = html('span', null, (k === 'legendStairs' ? '⇅ ' : k === 'legendSeat' ? '★ ' : k === 'legendPortal' ? '● ' : '') + T(k), $('mapLegend'));
+      if (k === 'legendCorr') { const i = document.createElement('i'); i.className = 'dash'; s.prepend(i); }
+    }
+  }
+
+  // ------------------------------------------------------------------ viewBox + pan/zoom (touch friendly)
+  let vb = { ...DEFAULT_VB };
+  function setVB(x, y, w, h) {
+    if (w != null) vb = { x, y, w: Math.max(w, 600), h: Math.max(h, 600) };
+    svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  }
+  function unitsPerPx() {
+    const r = svg.getBoundingClientRect();
+    return Math.max(vb.w / r.width, vb.h / r.height);
+  }
+  function fitBox(minX, minY, maxX, maxY, pad) {
+    const r = svg.getBoundingClientRect();
+    const aspect = r.height / Math.max(r.width, 1);
+    let w = (maxX - minX) + 2 * pad, h = (maxY - minY) + 2 * pad;
+    if (h < w * aspect) h = w * aspect; else w = h / aspect;
+    setVB((minX + maxX) / 2 - w / 2, (minY + maxY) / 2 - h / 2, w, h);
+  }
+  const fitPoint = (p, span) => fitBox(p.x - span / 2, p.y - span / 2, p.x + span / 2, p.y + span / 2, 0);
+
+  let dragged = false;
+  (function enablePanZoom() {
+    const pointers = new Map();
+    let pinch = null;
+    const mid = () => { const [a, b] = [...pointers.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) }; };
+    svg.addEventListener('pointerdown', (e) => {
+      svg.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      dragged = false;
+      if (pointers.size === 2) pinch = { ...mid(), vb: { ...vb }, s: unitsPerPx() };
+    });
+    svg.addEventListener('pointermove', (e) => {
+      if (!pointers.has(e.pointerId)) return;
+      const prev = pointers.get(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      const r = svg.getBoundingClientRect();
+      if (pointers.size === 1) {
+        const s = unitsPerPx();
+        const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+        if (Math.abs(dx) + Math.abs(dy) > 3) dragged = true;
+        setVB(vb.x - dx * s, vb.y - dy * s, vb.w, vb.h);
+      } else if (pointers.size === 2 && pinch) {
+        dragged = true;
+        const m = mid();
+        const k = pinch.d / Math.max(m.d, 1);
+        const w = pinch.vb.w * k, h = pinch.vb.h * k;
+        const s1 = Math.max(w / r.width, h / r.height);
+        // keep the world point under the initial midpoint fixed
+        const wx = pinch.vb.x + (pinch.x - r.left) * pinch.s, wy = pinch.vb.y + (pinch.y - r.top) * pinch.s;
+        setVB(wx - (m.x - r.left) * s1, wy - (m.y - r.top) * s1, w, h);
+      }
+    });
+    const up = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; };
+    svg.addEventListener('pointerup', up);
+    svg.addEventListener('pointercancel', up);
+    svg.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const r = svg.getBoundingClientRect();
+      const s0 = unitsPerPx();
+      const k = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+      const wx = vb.x + (e.clientX - r.left) * s0, wy = vb.y + (e.clientY - r.top) * s0;
+      const w = vb.w * k, h = vb.h * k;
+      const s1 = Math.max(w / r.width, h / r.height);
+      setVB(wx - (e.clientX - r.left) * s1, wy - (e.clientY - r.top) * s1, w, h);
+    }, { passive: false });
+  })();
 
   // ------------------------------------------------------------------ base map
   const layers = {};
@@ -83,10 +186,12 @@
     el('rect', { x: st.x, y: st.y, width: st.width, height: st.height, rx: 40, class: 'stage' }, layers.base);
     el('text', { x: st.x + st.width / 2, y: st.y + st.height / 2, class: 'stageLabel' }, layers.base, 'SAHNE / STAGE');
 
-    // concourse loops + floor tunnel
+    // concourse loops (labelled) + floor tunnel
     for (const l of Object.keys(G.levels)) {
       const loop = G.levels[l].corridor_loop.map(nodeById);
       el('polygon', { points: pts(loop), class: 'corridor', 'data-level': l }, layers.base);
+      const bottom = loop.reduce((a, n) => (n.y > a.y ? n : a), loop[0]);
+      el('text', { x: bottom.x, y: bottom.y + 95, class: 'corridorLabel', 'data-level': l }, layers.base, T('corridorOf', l));
     }
     for (const e of G.edges.filter((x) => x.type === 'tunnel')) {
       const a = nodeById(e.from), b = nodeById(e.to);
@@ -96,20 +201,30 @@
     // sections: real outlines from the seat coordinates
     for (const s of G.sections) {
       const poly = el('polygon', { points: pts(s.outline), class: 'sec', 'data-level': s.level, 'data-section': s.section, 'data-floor': s.floor ? 1 : null }, layers.base);
-      poly.addEventListener('click', () => { $('section').value = s.section; onSectionChange(); $('ticketForm').requestSubmit(); });
-      el('title', {}, poly, `${s.section} – ${G.levels[s.level].name[lang]} – ${s.row_count} ${t('ردیف', 'rows', 'sıra')}, ${s.seat_count} ${t('صندلی', 'seats', 'koltuk')}`);
+      poly.addEventListener('click', () => { if (dragged) return; $('section').value = s.section; onSectionChange(); runRoute(); });
+      el('title', {}, poly, `${s.section} – ${G.levels[s.level].name[lang]} – ${s.row_count} ${T('rows')}, ${s.seat_count} ${T('seats')}`);
       el('text', { x: s.centroid.x, y: s.centroid.y, class: 'secLabel', 'data-level': s.level }, layers.base, s.section);
     }
 
-    // vertical cores
-    for (const c of G.cores) {
-      const g = el('g', { class: 'coreG' }, layers.infra);
-      el('rect', { x: c.x - 85, y: c.y - 85, width: 170, height: 170, rx: 30, class: 'core' }, g);
-      el('text', { x: c.x, y: c.y + 6, class: 'coreLabel' }, g, '⇅');
-      el('title', {}, g, c.display[lang] + (c.modes.includes('elevator') ? t(' (آسانسور دارد)', ' (elevator)', ' (asansör)') : t(' (فقط پله)', ' (stairs only)', ' (sadece merdiven)')));
+    // section portals (vomitories) with the sign above them
+    for (const p of G.portals || []) {
+      const g = el('g', { class: 'portalG', 'data-level': p.level }, layers.infra);
+      el('circle', { cx: p.x, cy: p.y, r: 34, class: 'portalMark' }, g);
+      el('text', { x: p.x, y: p.y + 2, class: 'portalLabel' }, g, p.sign);
+      el('title', {}, g, `${T('legendPortal')} ${p.sign}`);
     }
 
-    // gates + checkpoint chains
+    // vertical cores (stairs / elevators)
+    for (const c of G.cores) {
+      const g = el('g', { class: 'coreG' }, layers.infra);
+      const elev = c.modes.includes('elevator');
+      el('rect', { x: c.x - 85, y: c.y - 85, width: 170, height: 170, rx: 30, class: 'core' + (elev ? ' elev' : '') }, g);
+      el('text', { x: c.x, y: c.y + 6, class: 'coreLabel' }, g, '⇅');
+      el('text', { x: c.x, y: c.y + 150, class: 'coreText' }, g, elev ? `${T('stairs')} + ${T('elevator')}` : T('stairs'));
+      el('title', {}, g, c.display[lang] + (elev ? T('elev') : T('stairsOnly')));
+    }
+
+    // entrances + checkpoint chains
     const icons = { gate: '🚪', security: '🛂', ticket_control: '🎫', lobby: '🏟️' };
     for (const gate of G.gates) {
       gate.chain.forEach((id, i) => {
@@ -120,17 +235,17 @@
         el('title', {}, g, n.label[lang]);
       });
       const gn = nodeById(gate.node);
-      el('text', { x: gn.x, y: gn.y - 190, class: 'infraLabel', 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 110 }, layers.infra, gate.display.tr);
-      el('text', { x: gn.x, y: gn.y + 210, class: 'infraLabel', 'text-anchor': 'middle' }, layers.infra, gate.display[lang]);
+      const above = gn.y < G.coordinate_system.center.y;
+      el('text', { x: gn.x, y: gn.y + (above ? -190 : 230), class: 'infraLabel', 'text-anchor': 'middle', 'font-weight': 700, 'font-size': 110 }, layers.infra, gate.short ? gate.short.tr : gate.display.tr);
     }
 
-    // compass (orientation is an assumption – see README)
+    // compass (orientation inferred from the entrance positions – see README)
     const cx = B.minX - PAD + 260, cy = B.minY - PAD + 260, brg = G.coordinate_system.map_north_bearing_deg || 0;
     const comp = el('g', { class: 'compassG', transform: `translate(${cx} ${cy})` }, layers.infra);
     el('circle', { cx: 0, cy: 0, r: 170, class: 'compassRing' }, comp);
     el('path', { d: 'M0,-150 L45,0 L0,-30 L-45,0 Z', class: 'compassArrow', transform: `rotate(${-brg})` }, comp);
     el('text', { x: 0, y: 0, class: 'compass', transform: `rotate(${-brg}) translate(0 -205)` }, comp, 'N');
-    el('title', {}, comp, t('جهت شمال (از موقعیت ورودی‌های سالن استنتاج شده)', 'North (inferred from the entrance positions)', 'Kuzey (giriş konumlarından çıkarıldı)'));
+    el('title', {}, comp, T('north'));
 
     applyLevelFilter(currentLevel);
   }
@@ -138,11 +253,11 @@
   // ------------------------------------------------------------------ level filter
   let currentLevel = 'all';
   function applyLevelFilter(level) {
-    currentLevel = level;
-    document.querySelectorAll('.levels button').forEach((b) => b.classList.toggle('active', b.dataset.level === String(level)));
+    currentLevel = String(level);
+    document.querySelectorAll('.levels button').forEach((b) => b.classList.toggle('active', b.dataset.level === currentLevel));
     svg.querySelectorAll('[data-level]').forEach((e) => {
       const l = e.getAttribute('data-level');
-      e.classList.toggle('dim', level !== 'all' && l !== String(level));
+      e.classList.toggle('dim', currentLevel !== 'all' && l !== currentLevel);
     });
   }
 
@@ -157,9 +272,8 @@
         const isTarget = target && target.row === r.row && String(target.seat) === String(s[0]);
         const c = el('circle', { cx: s[1], cy: s[2], r: isTarget ? 16 : 11, class: 'seatDot', 'data-status': statusName[s[3]] || s[3], 'data-level': level }, layers.seats);
         el('title', {}, c, `${sectionName} / ${r.row} / ${s[0]} – ${(STATUS_NAME[statusName[s[3]]] || {})[lang] || s[3]}${s[4] != null ? ` – ${s[4]}` : ''}`);
-        c.addEventListener('click', (ev) => { ev.stopPropagation(); $('row').value = r.row; $('seat').value = s[0]; $('ticketForm').requestSubmit(); });
+        c.addEventListener('click', (ev) => { ev.stopPropagation(); if (dragged) return; $('row').value = r.row; $('seat').value = s[0]; runRoute(); });
       }
-      // row label just before the first seat of the row
       if (r.seats.length) {
         const a = r.seats[0], b = r.seats[r.seats.length - 1];
         const dx = b[1] - a[1], dy = b[2] - a[2], len = Math.hypot(dx, dy) || 1;
@@ -177,19 +291,16 @@
     if (destSec) destSec.classList.add('dest');
     drawSeats(res.destination.section, res.destination.level, res.destination.seat.seat_found ? res.destination.seat : null);
 
-    // outdoor leg (if origin known and close enough): follows the organiser's approach path
     if (res.outdoor && res.outdoor.origin.map_xy) {
       const o = res.outdoor.origin.map_xy, g = res.gate.map_xy;
       const line = res.outdoor.polyline_map_xy ? [...res.outdoor.polyline_map_xy.slice(0, -1), g] : [o, g];
       el('polyline', { points: pts(line), class: 'outdoorPath', stroke: APPROACH_COLORS[(res.outdoor.approach || {}).color] || '#7bd389' }, layers.route);
       el('circle', { cx: o.x, cy: o.y, r: 70, class: 'youMarker' }, layers.overlay);
-      el('text', { x: o.x, y: o.y - 120, class: 'markerLabel' }, layers.overlay, t('شما', 'You', 'Siz'));
+      el('text', { x: o.x, y: o.y - 120, class: 'markerLabel' }, layers.overlay, T('you'));
     }
 
-    // indoor path: group consecutive nodes into polylines by level; vertical hops become pulses
     const nodes = res.path.nodes;
-    let seg = [];
-    let segLevel = null;
+    let seg = [], segLevel = null;
     const flush = () => {
       if (seg.length < 2) { seg = []; return; }
       const p = pts(seg);
@@ -201,7 +312,7 @@
     nodes.forEach((n, i) => {
       if (n.via === 'vertical') {
         flush();
-        el('circle', { cx: n.x, cy: n.y, r: 50, class: 'vert', 'data-anim': 1 }, layers.overlay);
+        el('circle', { cx: n.x, cy: n.y, r: 50, class: 'vert' }, layers.overlay);
         seg = [n]; segLevel = n.level; return;
       }
       const lvl = n.level === 0 ? (segLevel == null ? 0 : segLevel) : n.level;
@@ -211,15 +322,12 @@
       if (i === nodes.length - 1) flush();
     });
 
-    // portal → seat
     const portal = res.destination.portal, seat = res.destination.seat;
     el('line', { x1: portal.x, y1: portal.y, x2: seat.x, y2: seat.y, class: 'seatPath' }, layers.route);
     el('circle', { cx: portal.x, cy: portal.y, r: 50, class: 'marker', fill: LEVEL_COLORS[res.destination.level] }, layers.overlay);
     el('path', { d: starPath(seat.x, seat.y, 60, 26), class: 'seatMarker' }, layers.overlay);
     el('text', { x: seat.x, y: seat.y - 95, class: 'markerLabel' }, layers.overlay,
       `${res.ticket.row ? res.ticket.row : ''}${res.ticket.seat ? '-' + res.ticket.seat : ''}` || res.destination.section);
-
-    // gate marker emphasis
     el('circle', { cx: res.gate.map_xy.x, cy: res.gate.map_xy.y, r: 150, class: 'hl' }, layers.overlay);
   }
 
@@ -232,53 +340,72 @@
     return d + 'Z';
   }
 
-  function setViewBox(minX, minY, w, h) {
-    svg.setAttribute('viewBox', `${minX} ${minY} ${Math.max(w, 1500)} ${Math.max(h, 1500)}`);
-  }
-
   function fitToRoute(res) {
     const p = res.path.nodes.map((n) => [n.x, n.y]);
     p.push([res.destination.seat.x, res.destination.seat.y]);
     if (res.outdoor && res.outdoor.origin.map_xy) p.push([res.outdoor.origin.map_xy.x, res.outdoor.origin.map_xy.y]);
     const xs = p.map((q) => q[0]), ys = p.map((q) => q[1]);
-    const pad = 450;
-    setViewBox(Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad);
+    fitBox(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), 450);
   }
-
   function fitToSection(res) {
     const s = G.sections.find((x) => x.section === res.destination.section);
     const xs = s.outline.map((q) => q.x).concat([res.destination.portal.x]), ys = s.outline.map((q) => q.y).concat([res.destination.portal.y]);
-    const pad = 180;
-    setViewBox(Math.min(...xs) - pad, Math.min(...ys) - pad, Math.max(...xs) - Math.min(...xs) + 2 * pad, Math.max(...ys) - Math.min(...ys) + 2 * pad);
+    fitBox(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), 180);
   }
 
-  function highlightStep(step) {
+  // ------------------------------------------------------------------ step navigation
+  function selectStep(i) {
+    const res = lastResult;
+    if (!res) return;
+    currentStep = Math.max(0, Math.min(i, res.steps.length - 1));
+    const step = res.steps[currentStep];
+    document.querySelectorAll('#steps .step').forEach((li, k) => li.classList.toggle('active', k === currentStep));
+    // keep the map (not the list) in view while stepping through the route
+    const box = document.querySelector('.mapBox');
+    if (box && box.getBoundingClientRect().top < 0 || (box && box.getBoundingClientRect().bottom > window.innerHeight)) box.scrollIntoView({ block: 'start', behavior: 'smooth' });
+
+    $('navCount').textContent = T('stepOf', currentStep + 1, res.steps.length);
+    $('navDist').textContent = step.distance_m ? `${fmtN(step.distance_m)} m` : (step.wait_min ? `~${fmtN(step.wait_min)} ${T('min')}` : '');
+    $('navTitle').textContent = `${step.icon} ${step.title[lang] || step.title.en}`;
+    $('navDetail').textContent = (step.detail && (step.detail[lang] || step.detail.en)) || '';
+    $('btnPrev').disabled = currentStep === 0;
+    $('btnNext').disabled = currentStep === res.steps.length - 1;
+
+    // map focus
     layers.overlay.querySelectorAll('.stepHl').forEach((e) => e.remove());
+    showTab('indoor');
+    if (step.level > 0) applyLevelFilter(step.level); else applyLevelFilter('all');
+    if (step.type === 'outdoor') {
+      const line = res.outdoor.polyline_map_xy || [res.outdoor.origin.map_xy, res.gate.map_xy].filter(Boolean);
+      if (line.length) { const xs = line.map((q) => q.x), ys = line.map((q) => q.y); fitBox(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), 500); }
+    } else if (step.type === 'concourse' || step.type === 'vertical') {
+      const ns = step.node_ids.map(nodeById).filter(Boolean);
+      if (step.from) ns.push(step.from);
+      const xs = ns.map((q) => q.x), ys = ns.map((q) => q.y);
+      fitBox(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys), 600);
+    } else if (step.type === 'row' || step.type === 'seat') {
+      fitToSection(res);
+    } else if (step.to) {
+      fitPoint(step.to, 1700);
+    }
     const p = step.to || step.from;
-    if (!p) return;
-    el('circle', { cx: p.x, cy: p.y, r: 180, class: 'hl stepHl' }, layers.overlay);
-    if (step.level && step.level > 0) applyLevelFilter(currentLevel === 'all' ? 'all' : step.level);
-    if (step.type === 'row' || step.type === 'seat') fitToSection(lastResult);
+    if (p && step.type !== 'outdoor') el('circle', { cx: p.x, cy: p.y, r: 180, class: 'hl stepHl' }, layers.overlay);
   }
 
   // ------------------------------------------------------------------ panel rendering
   function renderResult(res) {
     $('error').classList.add('hidden');
-    $('result').classList.remove('hidden');
     const sum = $('summary');
     sum.innerHTML = '';
-    const tile = (b, s, wide) => { const tl = html('div', 'tile' + (wide ? ' wide' : ''), null, sum); html('b', null, b, tl); html('span', null, s, tl); return tl; };
-    const gateT = tile(`${res.gate.display.tr} · ${res.gate.id}`, t('ورودی', 'Gate', 'Kapı'), true);
-    html('div', 'gateSrc', t('منبع: ', 'source: ', 'kaynak: ') + (res.gate.source_label[lang] || res.gate.source_label.en), gateT);
-    tile(res.destination.level_name[lang], t('طبقه', 'Level', 'Kat'));
-    tile(`${res.destination.section} / ${res.ticket.row || '—'} / ${res.ticket.seat || '—'}`, t('سکشن / ردیف / صندلی', 'Section / Row / Seat', 'Blok / Sıra / Koltuk'));
-    tile(`≈ ${fmt(res.summary.indoor_distance_m)} m`, t('پیاده‌روی داخل سالن', 'Indoor walk', 'Salon içi yürüyüş'));
-    tile(`≈ ${fmt(res.summary.total_duration_min)} ${t('دقیقه', 'min', 'dk')}`, t('زمان کل (با صف)', 'Total time (incl. queues)', 'Toplam süre'));
+    const tile = (b, s, cls) => { const tl = html('div', 'tile' + (cls ? ' ' + cls : ''), null, sum); html('b', null, b, tl); html('span', null, s, tl); return tl; };
+    const gateT = tile(`${res.gate.short ? res.gate.short[lang] || res.gate.short.tr : res.gate.id} · ${res.gate.display.tr}`, T('gateT'), 'gate');
+    html('div', 'gateSrc', T('source') + (res.gate.source_label[lang] || res.gate.source_label.en), gateT);
+    tile(`${res.destination.section} / ${res.ticket.row || '—'} / ${res.ticket.seat || '—'}`, T('srs'));
+    tile(res.destination.level_name[lang], T('level'));
+    tile(`≈ ${fmtN(res.summary.indoor_distance_m)} m`, T('indoor'));
+    tile(`≈ ${fmtN(res.summary.total_duration_min)} ${T('min')}`, T('total'));
     const ds = res.destination.seat;
-    if (ds.seat_found) {
-      const st = STATUS_NAME[ds.status] ? STATUS_NAME[ds.status][lang] : ds.status;
-      tile(`${st}${ds.price != null ? ` · ${fmt(ds.price)}` : ''}`, t('وضعیت صندلی در سیستم بلیت', 'Seat status in the ticketing system', 'Bilet sistemindeki koltuk durumu'), true);
-    }
+    if (ds.seat_found) tile(`${STATUS_NAME[ds.status] ? STATUS_NAME[ds.status][lang] : ds.status}${ds.price != null ? ` · ${fmtN(ds.price)}` : ''}`, T('seatStatus'));
 
     const w = $('warnings');
     w.innerHTML = '';
@@ -286,54 +413,53 @@
 
     const ol = $('steps');
     ol.innerHTML = '';
-    for (const s of res.steps) {
+    res.steps.forEach((s, i) => {
       const li = html('li', 'step', null, ol);
       li.dataset.level = s.level;
       html('div', 'ico', s.icon, li);
       const body = html('div', null, null, li);
-      html('div', 't', `${s.n > 0 ? s.n + '. ' : ''}${s.title[lang] || s.title.en}`, body);
+      html('div', 't', `${s.n > 0 ? fmtN(s.n) + '. ' : ''}${s.title[lang] || s.title.en}`, body);
       if (s.detail && (s.detail[lang] || s.detail.en)) html('div', 'd', s.detail[lang] || s.detail.en, body);
-      if (s.directions_url) {
-        const a = html('a', null, t('🗺️ مسیریابی خیابانی (Google Maps)', '🗺️ Street directions (Google Maps)', '🗺️ Sokak yol tarifi (Google Maps)'), body);
-        a.href = s.directions_url; a.target = '_blank'; a.rel = 'noopener';
-      }
-      html('div', 'm', s.distance_m ? `${fmt(s.distance_m)} m` : (s.wait_min ? `~${s.wait_min} min` : ''), li);
-      li.addEventListener('click', () => {
-        ol.querySelectorAll('.step').forEach((x) => x.classList.remove('active'));
-        li.classList.add('active');
-        highlightStep(s);
-      });
-    }
+      if (s.directions_url) { const a = html('a', null, T('openMaps'), body); a.href = s.directions_url; a.target = '_blank'; a.rel = 'noopener'; }
+      html('div', 'm', s.distance_m ? `${fmtN(s.distance_m)} m` : (s.wait_min ? `~${fmtN(s.wait_min)} ${T('min')}` : ''), li);
+      li.addEventListener('click', () => selectStep(i));
+    });
     $('json').textContent = JSON.stringify(res, null, 2);
-    renderOutdoor(res);
+    $('tabStreet').disabled = !res.outdoor;
+    renderOutdoorInfo(res);
   }
 
-  function renderOutdoor(res) {
-    const box = $('outdoor'), info = $('outdoorInfo');
-    if (!res.outdoor) { box.classList.add('hidden'); return; }
-    box.classList.remove('hidden');
-    const o = res.outdoor;
+  function renderOutdoorInfo(res) {
+    const info = $('outdoorInfo');
     info.innerHTML = '';
-    html('span', null, `📍 ${t('پیاده تا', 'Walk to', 'Yürüyüş:')} ${res.gate.display.tr}: ≈ ${fmt(o.distance_m)} m${o.straight_line_m !== o.distance_m ? ` (${t('خط مستقیم', 'straight line', 'kuş uçuşu')} ${fmt(o.straight_line_m)} m)` : ''}`, info);
-    html('span', null, `🧭 ${t('جهت اولیه', 'Initial bearing', 'İlk yön')}: ${o.bearing_deg}° (${lang === 'fa' ? o.compass_fa : o.compass})`, info);
-    html('span', null, `⏱ ≈ ${fmt(o.duration_min)} ${t('دقیقه پیاده', 'min walk', 'dk yürüyüş')}`, info);
-    const a = html('a', null, t('باز کردن در Google Maps ↗', 'Open in Google Maps ↗', 'Google Maps’te aç ↗'), info);
+    if (!res.outdoor) return;
+    const o = res.outdoor;
+    html('span', null, `📍 ${T('walkTo')} ${res.gate.display.tr}: ≈ ${fmtN(o.distance_m)} m${o.straight_line_m !== o.distance_m ? ` (${T('straight')} ${fmtN(o.straight_line_m)} m)` : ''} · ⏱ ≈ ${fmtN(o.duration_min)} ${T('minWalk')}`, info);
+    html('span', null, `🧭 ${T('bearing')}: ${o.bearing_deg}° (${lang === 'fa' ? o.compass_fa : o.compass})`, info);
+    const a = html('a', null, T('openMaps'), info);
     a.href = o.directions_url; a.target = '_blank'; a.rel = 'noopener';
     html('span', 'muted', o.note[lang] || o.note.en, info);
-
-    const div = $('leaflet');
-    div.classList.add('hidden');
-    ensureLeaflet().then((ok) => {
-      if (!ok || lastResult !== res) {
-        if (!ok) html('span', 'muted', t('(نقشه خیابانی در دسترس نیست – آفلاین)', '(street map unavailable – offline)', '(sokak haritası yok – çevrimdışı)'), info);
-        return;
-      }
-      div.classList.remove('hidden');
-      drawLeaflet(res, div);
-    });
   }
 
-  function drawLeaflet(res, div) {
+  function ensureLeaflet() {
+    if (window.L) return Promise.resolve(true);
+    if (leafletPromise) return leafletPromise;
+    leafletPromise = new Promise((resolve) => {
+      const done = (ok) => { clearTimeout(timer); resolve(ok); };
+      const timer = setTimeout(() => done(false), 8000);
+      const css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+      document.head.appendChild(css);
+      const js = document.createElement('script');
+      js.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+      js.onload = () => done(!!window.L); js.onerror = () => done(false);
+      document.head.appendChild(js);
+    });
+    return leafletPromise;
+  }
+
+  function drawLeaflet(res) {
+    const div = $('leaflet');
     const o = res.outdoor;
     if (!leafletMap) {
       leafletMap = L.map(div, { zoomControl: true });
@@ -341,24 +467,46 @@
     }
     if (leafletLayer) leafletLayer.remove();
     leafletLayer = L.layerGroup().addTo(leafletMap);
-    const origin = [o.origin.lat, o.origin.lon], gate = [o.gate.lat, o.gate.lon];
-    L.circleMarker(origin, { radius: 8, color: '#fff', fillColor: '#7bd389', fillOpacity: 1 }).bindPopup(t('موقعیت شما', 'You', 'Siz')).addTo(leafletLayer);
+    const origin = [o.origin.lat, o.origin.lon];
+    L.circleMarker(origin, { radius: 8, color: '#fff', fillColor: '#7bd389', fillOpacity: 1 }).bindPopup(T('you')).addTo(leafletLayer);
     if (o.origin.accuracy_m) L.circle(origin, { radius: o.origin.accuracy_m, color: '#7bd389', weight: 1, fillOpacity: .08 }).addTo(leafletLayer);
-    L.circleMarker(gate, { radius: 9, color: '#fff', fillColor: '#4f8cff', fillOpacity: 1 }).bindPopup(`${res.gate.display.tr} (${res.gate.id})`).addTo(leafletLayer);
-    L.circleMarker([G.venue.lat, G.venue.lon], { radius: 5, color: '#e76f51', fillColor: '#e76f51', fillOpacity: .9 }).bindPopup(G.venue.name).addTo(leafletLayer);
-    const color = APPROACH_COLORS[(o.approach || {}).color] || '#7bd389';
-    L.polyline(o.polyline, { color, weight: 5, opacity: .9 }).addTo(leafletLayer);
-    // all three entrances with their approach paths, for orientation
+    L.polyline(o.polyline, { color: APPROACH_COLORS[(o.approach || {}).color] || '#7bd389', weight: 5, opacity: .9 }).addTo(leafletLayer);
     for (const g of G.gates) {
-      L.circleMarker([g.lat, g.lon], { radius: 6, color: '#fff', fillColor: APPROACH_COLORS[(g.approach || {}).color] || '#888', fillOpacity: .9 }).bindPopup(`${g.display.tr} (${g.id})`).addTo(leafletLayer);
+      L.circleMarker([g.lat, g.lon], { radius: g.id === res.gate.id ? 9 : 6, color: '#fff', fillColor: APPROACH_COLORS[(g.approach || {}).color] || '#888', fillOpacity: .95 }).bindPopup(`${g.display.tr} (${g.id})`).addTo(leafletLayer);
       if (g.approach && g.id !== res.gate.id) L.polyline([...g.approach.waypoints, [g.lat, g.lon]], { color: APPROACH_COLORS[g.approach.color] || '#888', weight: 2, dashArray: '4 6', opacity: .6 }).addTo(leafletLayer);
     }
     leafletMap.fitBounds(L.latLngBounds(o.polyline).pad(0.3));
     setTimeout(() => leafletMap.invalidateSize(), 50);
   }
 
+  function showTab(which) {
+    const street = which === 'street' && lastResult && lastResult.outdoor;
+    $('tabIndoor').classList.toggle('active', !street);
+    $('tabStreet').classList.toggle('active', !!street);
+    $('indoorPane').classList.toggle('hidden', !!street);
+    $('outdoorPane').classList.toggle('hidden', !street);
+    if (street) {
+      const info = $('outdoorInfo');
+      ensureLeaflet().then((ok) => {
+        if (!ok) { if (!info.querySelector('.offline')) html('span', 'muted offline', T('offline'), info); return; }
+        drawLeaflet(lastResult);
+      });
+    }
+  }
+
+  function showScreen(name) {
+    const route = name === 'route';
+    $('screenTicket').classList.toggle('hidden', route);
+    $('screenRoute').classList.toggle('hidden', !route);
+    $('screenRoute').classList.toggle('hasNav', route);
+    $('stepNav').classList.toggle('hidden', !route);
+    $('btnBack').classList.toggle('hidden', !route);
+    $('subTitle').textContent = route ? T('subRoute') : T('sub');
+    window.scrollTo({ top: 0 });
+  }
+
   function showError(msg) {
-    $('result').classList.add('hidden');
+    showScreen('ticket');
     const e = $('error');
     e.textContent = '⛔ ' + msg;
     e.classList.remove('hidden');
@@ -374,12 +522,7 @@
     for (const l of Object.keys(byLevel)) {
       const og = document.createElement('optgroup');
       og.label = G.levels[l].name[lang];
-      for (const s of byLevel[l]) {
-        const o = document.createElement('option');
-        o.value = s.section;
-        o.textContent = `${s.section} – ${zoneText(s.zone)}`;
-        og.appendChild(o);
-      }
+      for (const s of byLevel[l]) { const o = document.createElement('option'); o.value = s.section; o.textContent = `${s.section} – ${zoneText(s.zone)}`; og.appendChild(o); }
       sel.appendChild(og);
     }
     sel.value = keep || '414';
@@ -392,11 +535,7 @@
     if (!idx) { $('seatInfo').textContent = ''; return; }
     for (const r of idx.rows) { const o = document.createElement('option'); o.value = r.row; rows.appendChild(o); }
     const sec = G.sections.find((s) => s.section === $('section').value);
-    $('seatInfo').textContent = t(
-      `${sec.row_count} ردیف (${idx.rows[0].row} جلو … ${idx.rows[idx.rows.length - 1].row} کنار ورودی)، ${sec.seat_count} صندلی`,
-      `${sec.row_count} rows (${idx.rows[0].row} front … ${idx.rows[idx.rows.length - 1].row} at the portal), ${sec.seat_count} seats`,
-      `${sec.row_count} sıra (${idx.rows[0].row} ön … ${idx.rows[idx.rows.length - 1].row} girişte), ${sec.seat_count} koltuk`
-    );
+    $('seatInfo').textContent = T('seatInfo', sec.row_count, idx.rows[0].row, idx.rows[idx.rows.length - 1].row, sec.seat_count);
     onRowChange();
   }
 
@@ -411,14 +550,13 @@
   }
 
   function populateForm() {
+    const q = new URLSearchParams(location.search);
+    if (q.get('lang') && I18N[q.get('lang')]) { $('lang').value = q.get('lang'); lang = q.get('lang'); }
     fillSectionOptions();
     const gs = $('gate');
-    for (const g of G.gates) { const o = document.createElement('option'); o.value = g.id; o.textContent = `${g.display.tr} – ${g.display.fa}`; gs.appendChild(o); }
-
-    const q = new URLSearchParams(location.search);
+    for (const g of G.gates) { const o = document.createElement('option'); o.value = g.id; o.textContent = `${g.display.tr} – ${g.display[lang] || g.display.en}`; gs.appendChild(o); }
     for (const k of ['event_id', 'section', 'row', 'seat', 'gate', 'lat', 'lon']) if (q.get(k)) $(k).value = q.get(k);
     if (q.get('accessible')) $('accessible').checked = true;
-    if (q.get('lang') && ['fa', 'en', 'tr'].includes(q.get('lang'))) { $('lang').value = q.get('lang'); lang = q.get('lang'); fillSectionOptions(); }
     if (!q.get('row') && !q.get('section')) { $('row').value = 'L'; $('seat').value = '1'; }
     onSectionChange();
   }
@@ -444,8 +582,10 @@
       const res = router.route(req);
       lastResult = res;
       renderResult(res);
+      showScreen('route');
       drawRoute(res);
       fitToRoute(res);
+      selectStep(0);
       const q = new URLSearchParams();
       for (const k of ['event_id', 'section', 'row', 'seat', 'gate']) if (req[k]) q.set(k, req[k]);
       if (req.origin) { q.set('lat', req.origin.lat.toFixed(6)); q.set('lon', req.origin.lon.toFixed(6)); }
@@ -460,41 +600,47 @@
 
   function useGps() {
     const st = $('gpsStatus');
-    if (!navigator.geolocation) { st.textContent = t('مرورگر شما از GPS پشتیبانی نمی‌کند.', 'Your browser does not support geolocation.', 'Tarayıcınız konum desteklemiyor.'); return; }
-    st.textContent = t('⏳ در حال دریافت موقعیت…', '⏳ Getting your position…', '⏳ Konum alınıyor…');
+    if (!navigator.geolocation) { st.textContent = T('gpsNo'); return; }
+    st.textContent = T('gpsWait');
     navigator.geolocation.getCurrentPosition((pos) => {
       $('lat').value = pos.coords.latitude.toFixed(6);
       $('lon').value = pos.coords.longitude.toFixed(6);
       gpsAccuracy = Math.round(pos.coords.accuracy);
-      st.textContent = t(`✅ موقعیت دریافت شد (دقت ≈ ${gpsAccuracy} m)`, `✅ Position acquired (accuracy ≈ ${gpsAccuracy} m)`, `✅ Konum alındı (doğruluk ≈ ${gpsAccuracy} m)`);
+      st.textContent = T('gpsOk', gpsAccuracy);
       runRoute();
-    }, (err) => {
-      st.textContent = t('⛔ دسترسی به موقعیت ممکن نشد: ', '⛔ Could not get your position: ', '⛔ Konum alınamadı: ') + err.message;
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
+    }, (err) => { st.textContent = T('gpsErr') + err.message; }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
   }
 
   // ------------------------------------------------------------------ wire up
   populateForm();
+  applyI18n();
   drawBase();
-  svg.setAttribute('viewBox', DEFAULT_VIEWBOX);
+  setVB(DEFAULT_VB.x, DEFAULT_VB.y, DEFAULT_VB.w, DEFAULT_VB.h);
   $('ticketForm').addEventListener('submit', (e) => { e.preventDefault(); runRoute(); });
   $('section').addEventListener('change', onSectionChange);
   $('row').addEventListener('input', onRowChange);
   $('btnGps').addEventListener('click', useGps);
   $('btnDemo').addEventListener('click', () => {
-    // Ihlamur Blv. / Nilüfer Sk. bus stop – where the organiser's approach paths start
-    $('lat').value = '40.993330';
-    $('lon').value = '29.106420';
-    gpsAccuracy = 20;
-    $('gpsStatus').textContent = t('موقعیت شبیه‌سازی‌شده: ایستگاه اتوبوس بلوار Ihlamur (شرق سالن).', 'Simulated position: Ihlamur Blv. bus stop (east of the arena).', 'Simüle konum: Ihlamur Blv. durağı (salonun doğusu).');
+    $('lat').value = '40.993330'; $('lon').value = '29.106420'; gpsAccuracy = 20;
+    $('gpsStatus').textContent = T('demoMsg');
     runRoute();
   });
-  $('btnClearGps').addEventListener('click', () => { $('lat').value = ''; $('lon').value = ''; gpsAccuracy = null; $('gpsStatus').textContent = ''; if (lastResult) runRoute(); });
-  $('lang').addEventListener('change', (e) => { lang = e.target.value; fillSectionOptions(); onSectionChange(); drawBase(); if (lastResult) runRoute(); });
+  $('btnClearGps').addEventListener('click', () => { $('lat').value = ''; $('lon').value = ''; gpsAccuracy = null; $('gpsStatus').textContent = T('gpsHint'); });
+  $('lang').addEventListener('change', (e) => {
+    lang = e.target.value;
+    applyI18n(); fillSectionOptions(); onSectionChange(); drawBase();
+    if (lastResult) { const step = currentStep; runRoute(); selectStep(step); }
+  });
   document.querySelectorAll('.levels button').forEach((b) => b.addEventListener('click', () => applyLevelFilter(b.dataset.level)));
   $('btnFit').addEventListener('click', () => lastResult && fitToRoute(lastResult));
   $('btnSeat').addEventListener('click', () => lastResult && fitToSection(lastResult));
-  $('btnReset').addEventListener('click', () => svg.setAttribute('viewBox', DEFAULT_VIEWBOX));
+  $('btnReset').addEventListener('click', () => { setVB(DEFAULT_VB.x, DEFAULT_VB.y, DEFAULT_VB.w, DEFAULT_VB.h); applyLevelFilter('all'); });
+  $('btnPrev').addEventListener('click', () => selectStep(currentStep - 1));
+  $('btnNext').addEventListener('click', () => selectStep(currentStep + 1));
+  $('btnBack').addEventListener('click', () => showScreen('ticket'));
+  $('tabIndoor').addEventListener('click', () => showTab('indoor'));
+  $('tabStreet').addEventListener('click', () => showTab('street'));
+  window.addEventListener('resize', () => { if (lastResult && currentStep >= 0) selectStep(currentStep); });
 
   const q = new URLSearchParams(location.search);
   if (q.get('section')) runRoute();

@@ -120,6 +120,18 @@ const GATES = [
   }
 ];
 
+/**
+ * Interior section entrances (vomitories) and the signs above them. By default
+ * every section has its own entrance signed with the section number. Inside
+ * the arena one signed entrance often serves two neighbouring sections (the
+ * sign above it reads e.g. "103 – 104"): list those here and the sections
+ * share a single portal placed between them. Fill this from the signage
+ * inside the arena (photos of the signs are enough).
+ */
+const SHARED_PORTALS = [
+  // { sections: ['103', '104'], sign: '103 – 104' },
+];
+
 /** Gate labels historically seen on tickets for a section (informational; the level → entrance table drives routing). */
 const KNOWN_TICKET_GATE_LABELS = { 103: 'DOĞU', 410: 'BATI', 414: 'BATI' };
 
@@ -334,6 +346,26 @@ const corridorNodesByLevel = {};
 const sectionsOut = [];
 let prevTop = Infinity;
 
+/** Group sections into signed portals: shared portals from SHARED_PORTALS, one own portal for every other section. */
+function portalGroupsForLevel(secs) {
+  const taken = new Set();
+  const groups = [];
+  for (const sp of SHARED_PORTALS) {
+    const members = sp.sections.map(String).map((n) => secs.find((s) => s.section === n)).filter(Boolean);
+    if (!members.length) continue;
+    if (members.length !== sp.sections.length) throw new Error(`SHARED_PORTALS: sections ${sp.sections.join(',')} are not all on the same level / not found`);
+    members.forEach((m) => taken.add(m.section));
+    const portal = mean(members.map((m) => m.portal));
+    const corridor = mean(members.map((m) => m.corridor));
+    groups.push({ sign: sp.sign || members.map((m) => m.section).join(' – '), slug: members.map((m) => m.section).join('_'), sections: members, portal: { x: round1(portal.x), y: round1(portal.y) }, corridor: { x: round1(corridor.x), y: round1(corridor.y) }, shared: true });
+  }
+  for (const s of secs) if (!taken.has(s.section)) groups.push({ sign: s.section, slug: s.section, sections: [s], portal: s.portal, corridor: s.corridor, shared: false });
+  for (const g of groups) { g.angle = angleAround(CENTER, g.portal); g.zone = g.sections[0].zone; }
+  return groups.sort((a, b) => a.angle - b.angle);
+}
+
+const portalsOut = [];
+
 for (const level of LEVELS) {
   const secs = sectionNames.map((n) => sectionMap.get(n)).filter((s) => s.level === level && !s.floor).sort((a, b) => a.angle - b.angle);
   const minSeatY = Math.min(...secs.flatMap((s) => s.seats.map((q) => q.y)));
@@ -342,22 +374,23 @@ for (const level of LEVELS) {
   prevTop = yTop;
 
   corridorNodesByLevel[level] = [];
-  for (const s of secs) {
-    const portalId = `L${level}_SECTION_${s.section}_PORTAL`;
-    const corridorId = `L${level}_CORRIDOR_${s.section}`;
+  for (const g of portalGroupsForLevel(secs)) {
+    const portalId = `L${level}_SECTION_${g.slug}_PORTAL`;
+    const corridorId = `L${level}_CORRIDOR_${g.slug}`;
     addNode({
-      id: portalId, type: 'portal', level, section: s.section, zone: s.zone, x: s.portal.x, y: s.portal.y,
-      label: { fa: `ورودی سکشن ${s.section}`, en: `Section ${s.section} portal`, tr: `${s.section} Blok girişi` },
-      confidence: 'modelled_behind_last_row'
+      id: portalId, type: 'portal', level, section: g.sign, sections: g.sections.map((s) => s.section), sign: g.sign, zone: g.zone, x: g.portal.x, y: g.portal.y,
+      label: { fa: `ورودی سکشن ${g.sign}`, en: `Section ${g.sign} portal`, tr: `${g.sign} Blok girişi` },
+      confidence: g.shared ? 'shared_portal_between_sections' : 'modelled_behind_last_row'
     });
     addNode({
-      id: corridorId, type: 'corridor', level, section: s.section, zone: s.zone, x: s.corridor.x, y: s.corridor.y,
-      label: { fa: `راهروی طبقه ${level} مقابل ${s.section}`, en: `L${level} concourse at ${s.section}`, tr: `Kat ${level} koridor ${s.section}` },
+      id: corridorId, type: 'corridor', level, section: g.sign, zone: g.zone, x: g.corridor.x, y: g.corridor.y,
+      label: { fa: `راهروی طبقه ${level} مقابل ${g.sign}`, en: `L${level} concourse at ${g.sign}`, tr: `Kat ${level} koridor ${g.sign}` },
       confidence: 'modelled_concourse'
     });
     addEdge(corridorId, portalId, { type: 'portal_door' });
-    s.portalId = portalId; s.corridorId = corridorId;
-    corridorNodesByLevel[level].push({ id: corridorId, angle: s.angle, x: s.corridor.x, y: s.corridor.y, section: s.section });
+    for (const s of g.sections) { s.portalId = portalId; s.corridorId = corridorId; s.portalSign = g.sign; s.portalShared = g.shared; s.portalPoint = g.portal; }
+    corridorNodesByLevel[level].push({ id: corridorId, angle: g.angle, x: g.corridor.x, y: g.corridor.y, section: g.sign });
+    portalsOut.push({ id: portalId, level, sign: g.sign, sections: g.sections.map((s) => s.section), shared: g.shared, x: g.portal.x, y: g.portal.y, corridor_node: corridorId });
   }
 
   // Close the loop behind the stage: the largest angular gap between neighbouring stands is the stage end.
@@ -413,7 +446,8 @@ for (const s of sectionNames.map((n) => sectionMap.get(n)).filter((x) => x.floor
   });
   addEdge(tunnelId, portalId, { type: 'portal_door' });
   for (const c of nearestCorridorNodes(1, s.corridor, 2)) addEdge(c.id, tunnelId, { type: 'tunnel' });
-  s.portalId = portalId; s.corridorId = tunnelId;
+  s.portalId = portalId; s.corridorId = tunnelId; s.portalSign = s.section; s.portalShared = false; s.portalPoint = s.portal;
+  portalsOut.push({ id: portalId, level: 1, sign: s.section, sections: [s.section], shared: false, floor: true, x: s.portal.x, y: s.portal.y, corridor_node: tunnelId });
 }
 
 for (const name of sectionNames) {
@@ -427,7 +461,7 @@ for (const name of sectionNames) {
     centroid: { x: round1(s.centroid.x), y: round1(s.centroid.y) },
     outward: { x: +s.outward.x.toFixed(4), y: +s.outward.y.toFixed(4) },
     outline: s.outline,
-    portal: { x: s.portal.x, y: s.portal.y, node: s.portalId },
+    portal: { x: s.portalPoint.x, y: s.portalPoint.y, node: s.portalId, sign: s.portalSign, shared: s.portalShared },
     corridor_node: s.corridorId,
     rows: s.rowsOrdered,
     row_count: s.rows.size,
@@ -595,6 +629,7 @@ const graph = {
   important_warning: 'Seat, row and section positions come from the ticketing seat map and are exact in canvas units; entrance GPS positions and street approach paths come from the organiser. Portals, concourses, stairs, elevators and checkpoints are modelled from that geometry – they are not surveyed. The metre scale and the compass orientation of the canvas are estimates. Verify on-site or against an architectural plan before production use.',
   modelling_notes: [
     `Section portals are placed ${MODEL_M.portal_behind_last_row} m behind the last row of each stand, on the axis of the rows; concourse centre lines ${MODEL_M.corridor_behind_portal} m behind the portals.`,
+    `Interior entrance signs: ${SHARED_PORTALS.length ? SHARED_PORTALS.map((p) => p.sign || p.sections.join(' – ')).join(', ') + ' are shared entrances; every other section has its own.' : 'one signed entrance per section (SHARED_PORTALS is empty – fill it from the signs inside the arena).'}`,
     'Each level has one concourse loop that follows the real stand geometry and closes behind the stage end (those segments carry a small penalty).',
     'The VIP floor is entered from the rear of the floor through a tunnel under the rear stands, from the level-1 concourse.',
     'Vertical cores: one at the 400 entrance and one at the 100–200 entrance (stairs + escalator + elevator) plus two stairs-only cores (south side, stage end).',
@@ -607,6 +642,7 @@ const graph = {
   gates: gatesOut,
   cores: coresOut,
   sections: sectionsOut,
+  portals: portalsOut,
   seat_index: seatIndex,
   seat_status_codes: Object.fromEntries(Object.entries(STATUS_CODE).map(([k, v]) => [v, k])),
   nodes,
