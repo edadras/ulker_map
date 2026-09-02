@@ -1,9 +1,9 @@
 {
-  "_note": "Sample event → gate mapping (priority 2 of gate_policy). Replace with organiser data per event. Keys are event ids as strings.",
+  "_note": "Sample event → gate mapping (priority 2 of gate_policy). Replace with organiser data per event. Keys are event ids as strings; gate values are entrance ids (400, 100-200, VIP) or ticket labels (BATI, DOĞU). Sections are the ticketing-system section names (102–115, 202–215, 402–416, VIP).",
   "123": {
     "name": "Sample concert (demo data)",
-    "default_gate": "BATI",
-    "level_gates": { "1": "DOĞU", "2": "DOĞU", "4": "BATI" },
-    "section_gates": { "103": "DOĞU", "119": "DOĞU", "410": "BATI", "414": "BATI", "422": "BATI" }
+    "default_gate": "100-200",
+    "level_gates": { "1": "100-200", "2": "100-200", "4": "400" },
+    "section_gates": { "VIP": "VIP", "414": "BATI" }
   }
 }

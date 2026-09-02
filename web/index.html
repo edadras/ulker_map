@@ -12,7 +12,7 @@
       <h1>🏟️ مسیریاب سالن Ülker</h1>
       <p class="sub">Ülker Spor ve Etkinlik Salonu · از بلیط تا صندلی — ورودی، کنترل امنیتی، طبقه، راهرو، سکشن، ردیف، صندلی</p>
     </div>
-    <div class="badge warn" title="مختصات از روی نقشه عمومی صندلی‌ها تخمین زده شده‌اند">نمونه اولیه · مختصات تخمینی</div>
+    <div class="badge warn" title="صندلی‌ها از نقشه سیستم بلیت‌فروشی (دقیق)؛ راهروها، پله‌ها و ورودی‌ها مدل‌سازی‌شده">صندلی‌ها: نقشه سیستم بلیت · راهرو/ورودی: مدل‌سازی‌شده</div>
   </header>
 
   <main class="layout">
@@ -22,12 +22,15 @@
         <div class="grid2">
           <label>شناسه رویداد <input name="event_id" id="event_id" placeholder="123" inputmode="numeric"></label>
           <label>سکشن <select name="section" id="section" required></select></label>
-          <label>ردیف <input name="row" id="row" placeholder="L"></label>
-          <label>صندلی <input name="seat" id="seat" placeholder="1" inputmode="numeric"></label>
+          <label>ردیف <input name="row" id="row" placeholder="L" list="rows"></label>
+          <label>صندلی <input name="seat" id="seat" placeholder="1" inputmode="numeric" list="seats"></label>
         </div>
+        <datalist id="rows"></datalist>
+        <datalist id="seats"></datalist>
+        <p id="seatInfo" class="seatInfo"></p>
         <label>ورودی (KAPI) روی بلیط
           <select name="gate" id="gate">
-            <option value="">— روی بلیط نوشته نشده (خودکار) —</option>
+            <option value="">— خودکار: ورودی مخصوص طبقهٔ سکشن —</option>
           </select>
         </label>
         <label class="check"><input type="checkbox" id="accessible" name="accessible"> مسیر بدون پله (فقط آسانسور)</label>
@@ -35,7 +38,7 @@
         <h2>📍 موقعیت شما (اختیاری)</h2>
         <div class="gpsRow">
           <button type="button" id="btnGps" class="secondary">📡 استفاده از GPS</button>
-          <button type="button" id="btnDemo" class="ghost" title="یک نقطه ۳۰۰ متری جنوب‌غربی سالن">شبیه‌سازی</button>
+          <button type="button" id="btnDemo" class="ghost" title="ایستگاه اتوبوس بلوار Ihlamur، شرق سالن">شبیه‌سازی</button>
           <button type="button" id="btnClearGps" class="ghost">پاک کردن</button>
         </div>
         <div class="grid2">
@@ -72,23 +75,26 @@
       <div class="toolbar">
         <div class="levels">
           <button type="button" data-level="all" class="active">همه طبقات</button>
-          <button type="button" data-level="1">طبقه ۱ (۱۰۰)</button>
+          <button type="button" data-level="1">طبقه ۱ (۱۰۰ + VIP)</button>
           <button type="button" data-level="2">طبقه ۲ (۲۰۰)</button>
           <button type="button" data-level="4">طبقه ۴ (۴۰۰)</button>
         </div>
         <div class="viewBtns">
           <button type="button" id="btnFit" class="ghost">🔍 نمای مسیر</button>
+          <button type="button" id="btnSeat" class="ghost">💺 نمای سکشن/صندلی</button>
           <button type="button" id="btnReset" class="ghost">↺ کل سالن</button>
         </div>
       </div>
       <div class="mapWrap">
-        <svg id="map" viewBox="-190 -70 1380 1140" preserveAspectRatio="xMidYMid meet" role="img" aria-label="نقشه سالن"></svg>
+        <svg id="map" viewBox="-900 -700 8000 6000" preserveAspectRatio="xMidYMid meet" role="img" aria-label="نقشه سالن"></svg>
         <div class="legend">
           <span><i style="background:#2a9d8f"></i> طبقه ۱</span>
           <span><i style="background:#e9c46a"></i> طبقه ۲</span>
           <span><i style="background:#e76f51"></i> طبقه ۴</span>
+          <span><i style="background:#9b5de5"></i> VIP (کف سالن)</span>
           <span><i class="dash"></i> راهرو</span>
           <span>⇅ پله/آسانسور</span>
+          <span>★ صندلی شما</span>
         </div>
       </div>
       <div id="outdoor" class="outdoor hidden">
@@ -99,7 +105,7 @@
   </main>
 
   <footer class="foot">
-    <p>⚠️ مختصات پورتال‌ها، راهروها، پله‌ها و ورودی‌ها از روی هندسه نقشه عمومی صندلی‌ها تخمین/مدل‌سازی شده‌اند و مختصات واقعی معماری نیستند. برای نسخه عملیاتی باید با نقشه رسمی یا بازدید میدانی تطبیق داده شوند.</p>
+    <p>✅ موقعیت سکشن‌ها، ردیف‌ها و صندلی‌ها دقیقاً از نقشه صندلی سیستم بلیت‌فروشی است. ⚠️ موقعیت سه ورودی سالن (۴۰۰ / VIP / ۱۰۰–۲۰۰) و مسیر پیاده از خیابان تا هر ورودی از پین‌ها و نقشه‌های برگزارکننده است. ⚠️ ورودی سکشن‌ها، راهروها، پله‌ها و آسانسورها از روی همان هندسه مدل‌سازی شده‌اند و مقیاس متری و جهت شمال تخمینی است؛ برای نسخه عملیاتی باید با نقشه معماری یا بازدید میدانی تطبیق داده شوند.</p>
   </footer>
 
   <script src="graph.data.js"></script>

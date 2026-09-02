@@ -22,6 +22,17 @@
   // -------------------------------------------------------------------------
 
   const ZONE_NAMES = {
+    // stage-relative zones (as seen by a spectator facing the stage)
+    front_left: { fa: 'جلو، سمت چپ (رو به صحنه)', en: 'front-left (facing the stage)', tr: 'ön sol (sahneye bakarken)' },
+    left: { fa: 'سمت چپ (رو به صحنه)', en: 'left side (facing the stage)', tr: 'sol taraf (sahneye bakarken)' },
+    rear_left: { fa: 'عقب، سمت چپ', en: 'rear-left', tr: 'arka sol' },
+    rear: { fa: 'عقب سالن (روبه‌روی صحنه)', en: 'rear (opposite the stage)', tr: 'arka (sahne karşısı)' },
+    rear_right: { fa: 'عقب، سمت راست', en: 'rear-right', tr: 'arka sağ' },
+    right: { fa: 'سمت راست (رو به صحنه)', en: 'right side (facing the stage)', tr: 'sağ taraf (sahneye bakarken)' },
+    front_right: { fa: 'جلو، سمت راست (رو به صحنه)', en: 'front-right (facing the stage)', tr: 'ön sağ (sahneye bakarken)' },
+    front: { fa: 'پشت صحنه', en: 'stage end', tr: 'sahne ucu' },
+    floor: { fa: 'کف سالن (جلوی صحنه)', en: 'arena floor (in front of the stage)', tr: 'zemin (sahne önü)' },
+    // compass zones (legacy)
     north: { fa: 'شمال', en: 'north', tr: 'kuzey' },
     south: { fa: 'جنوب', en: 'south', tr: 'güney' },
     east: { fa: 'شرق', en: 'east', tr: 'doğu' },
@@ -134,15 +145,31 @@
     const center = graph.coordinate_system.center || { x: 500, y: 500 };
     const metersPerUnit = graph.coordinate_system.meters_per_unit || 0.13;
     const walking = graph.walking || { speed_m_per_s: 1.2, security_wait_min: 2, ticket_check_wait_min: 1 };
+    const statusNames = graph.seat_status_codes || {};
+
+    // ----- seat index (exact coordinates from the ticketing seat map) ---------
+
+    const seatIndex = new Map();
+    for (const [name, sec] of Object.entries(graph.seat_index || {})) {
+      const rows = (sec.rows || []).map((r, i) => {
+        const seats = r.seats.map((s) => ({ number: s[0], x: s[1], y: s[2], status_code: s[3], status: statusNames[s[3]] || s[3], price: s[4] }));
+        const cx = seats.reduce((a, s) => a + s.x, 0) / seats.length;
+        const cy = seats.reduce((a, s) => a + s.y, 0) / seats.length;
+        return { row: r.row, from_front: i, seats, seatMap: new Map(seats.map((s) => [s.number, s])), cx: round1(cx), cy: round1(cy) };
+      });
+      seatIndex.set(String(name), { section: String(name), rows, rowMap: new Map(rows.map((r) => [r.row, r])) });
+    }
 
     // ----- geo projection -------------------------------------------------
+
+    const geoCenter = graph.coordinate_system.geo_center || center;
 
     function mapToLatLon(p) {
       const geo = graph.geo;
       const metersPerDegLat = 111320;
       const metersPerDegLon = 111320 * Math.cos(deg2rad(geo.venue_lat));
-      const east = (p.x - center.x) * metersPerUnit;
-      const north = -(p.y - center.y) * metersPerUnit;
+      const east = (p.x - geoCenter.x) * metersPerUnit;
+      const north = -(p.y - geoCenter.y) * metersPerUnit;
       const brg = deg2rad(geo.map_north_bearing_deg || 0);
       const e = east * Math.cos(brg) + north * Math.sin(brg);
       const n = -east * Math.sin(brg) + north * Math.cos(brg);
@@ -158,7 +185,7 @@
       const brg = deg2rad(geo.map_north_bearing_deg || 0);
       const east = e * Math.cos(brg) - n * Math.sin(brg);
       const north = e * Math.sin(brg) + n * Math.cos(brg);
-      return { x: round1(center.x + east / metersPerUnit), y: round1(center.y - north / metersPerUnit) };
+      return { x: round1(geoCenter.x + east / metersPerUnit), y: round1(geoCenter.y - north / metersPerUnit) };
     }
 
     // ----- gate resolution -------------------------------------------------
@@ -177,15 +204,22 @@
     function nearestGateToSection(section) {
       let best = null;
       for (const g of graph.gates) {
-        const gAngle = (rad2deg(Math.atan2(g.y - center.y, g.x - center.x)) + 360) % 360;
-        const d = angularDistance(gAngle, section.angle_deg);
+        const d = Math.hypot(g.x - section.portal.x, g.y - section.portal.y);
         if (!best || d < best.d) best = { d, gate: g };
       }
       return best.gate;
     }
 
-    /** Priority: ticket gate → event mapping → historical section label → geometry. */
+    /** The entrance that serves the seat's level (organiser data), if any. */
+    function levelEntranceFor(section) {
+      const table = graph.level_entrances || {};
+      const id = section.floor ? table.floor : table[section.level];
+      return id != null ? gatesById.get(String(id)) || null : null;
+    }
+
+    /** Priority: ticket gate → event mapping → entrance serving the seat level → geometry. */
     function resolveGate(req, section, warnings) {
+      const levelGate = levelEntranceFor(section);
       const candidates = [
         { value: req.gate, source: 'ticket', fa: 'از روی بلیط', en: 'from the ticket' },
         { value: req.event_gate, source: 'event_mapping', fa: 'از نقشه ورودی‌های رویداد', en: 'from the event gate mapping' }
@@ -193,21 +227,23 @@
       for (const c of candidates) {
         if (c.value == null || String(c.value).trim() === '') continue;
         const id = normalizeGate(c.value);
-        if (id) return { gate: gatesById.get(id), source: c.source, source_label: { fa: c.fa, en: c.en } };
-        const err = new Error(`Unknown gate "${c.value}". Known gates: ${graph.gates.map((g) => g.id).join(', ')}`);
-        err.code = 'UNKNOWN_GATE';
-        throw err;
-      }
-      if (section.known_ticket_gate_label) {
-        const id = normalizeGate(section.known_ticket_gate_label);
-        if (id) {
-          warnings.push({
-            code: 'GATE_FROM_HISTORICAL_LABEL',
-            fa: `ورودی روی بلیط مشخص نشده بود؛ از برچسب قبلاً دیده‌شده برای سکشن ${section.section} (${id}) استفاده شد. حتماً با بلیط خود مقایسه کنید.`,
-            en: `No gate on the ticket; used the gate label previously seen for section ${section.section} (${id}). Verify against your ticket.`
-          });
-          return { gate: gatesById.get(id), source: 'section_history', source_label: { fa: 'برچسب قبلی سکشن', en: 'historical section label' } };
+        if (!id) {
+          const err = new Error(`Unknown gate "${c.value}". Known gates: ${graph.gates.map((g) => g.id).join(', ')}`);
+          err.code = 'UNKNOWN_GATE';
+          throw err;
         }
+        const gate = gatesById.get(id);
+        if (levelGate && levelGate.id !== gate.id) {
+          warnings.push({
+            code: 'GATE_NOT_FOR_LEVEL',
+            fa: `ورودی «${c.value}» (${gate.short ? gate.short.fa : gate.id}) ${c.fa} انتخاب شد، اما ورودی معمول سکشن ${section.section} «${levelGate.short ? levelGate.short.fa : levelGate.id}» است. مسیر از ورودی انتخاب‌شده رسم شد؛ با بلیط/برگزارکننده چک کنید.`,
+            en: `Gate "${c.value}" (${gate.short ? gate.short.en : gate.id}) was taken ${c.en}, but section ${section.section} is normally entered through the ${levelGate.short ? levelGate.short.en : levelGate.id}. Routed from the chosen gate – check with the ticket/organiser.`
+          });
+        }
+        return { gate, source: c.source, source_label: { fa: c.fa, en: c.en } };
+      }
+      if (levelGate) {
+        return { gate: levelGate, source: 'level_entrance', source_label: { fa: 'ورودی مخصوص این طبقه', en: 'entrance serving this level' } };
       }
       const g = nearestGateToSection(section);
       warnings.push({
@@ -262,41 +298,76 @@
 
     // ----- seat model --------------------------------------------------------
 
+    /**
+     * Exact seat position from the ticketing seat map. Falls back to the row
+     * centre (unknown seat) or the back row (unknown row) with a warning.
+     */
     function seatPosition(section, rowInfo, seatInfo, warnings) {
-      const lvl = graph.levels[section.level];
-      const rows = lvl.rows_estimate;
-      const seatsPerRow = lvl.seats_per_row_estimate;
+      const idx = seatIndex.get(String(section.section));
+      const portal = section.portal;
+      const outward = section.outward || { x: 0, y: -1 };
+      const facing = { x: -outward.x, y: -outward.y };     // portal → floor/stage
+      const right = { x: -facing.y, y: facing.x };         // spectator's right when facing the floor (screen y grows downward)
+      const m = (units) => Math.round(units * metersPerUnit * 10) / 10;
 
-      let rowIdx = rowInfo ? rowInfo.index : rows; // unknown row → assume top row
-      if (rowInfo && rowInfo.index > rows) {
+      if (!idx || !idx.rows.length) {
+        return {
+          x: section.centroid.x, y: section.centroid.y, row: null, seat: null, row_found: false, seat_found: false,
+          rows_total: 0, rows_from_front: null, rows_from_portal: null, seat_side_from_portal: 'middle',
+          distance_from_portal_m: m(Math.hypot(section.centroid.x - portal.x, section.centroid.y - portal.y)),
+          confidence: 'section_centroid'
+        };
+      }
+
+      const rowKey = rowInfo ? rowInfo.label : null;
+      const row = rowKey ? idx.rowMap.get(rowKey) : null;
+      if (rowKey && !row) {
         warnings.push({
-          code: 'ROW_BEYOND_MODEL',
-          fa: `ردیف ${rowInfo.label} از تعداد ردیف تخمینی این طبقه (${rows}) بیشتر است؛ موقعیت در آخرین ردیف نمایش داده می‌شود.`,
-          en: `Row ${rowInfo.label} exceeds the estimated row count for this level (${rows}); shown at the last row.`
+          code: 'ROW_NOT_FOUND',
+          fa: `ردیف «${rowKey}» در سکشن ${section.section} وجود ندارد (ردیف‌ها: ${idx.rows.map((r) => r.row).join('، ')}). موقعیت در ردیف آخر نمایش داده می‌شود.`,
+          en: `Row "${rowKey}" does not exist in section ${section.section} (rows: ${idx.rows.map((r) => r.row).join(', ')}). Shown at the back row.`
         });
-        rowIdx = rows;
       }
-      const t = rows > 1 ? (Math.max(1, rowIdx) - 1) / (rows - 1) : 0;
-      const r = lvl.row_inner_r + t * (lvl.row_outer_r - lvl.row_inner_r);
-
-      let seatT = 0.5;
-      if (seatInfo) {
-        const idx = Math.min(Math.max(1, seatInfo.index), seatsPerRow);
-        seatT = seatsPerRow > 1 ? (idx - 1) / (seatsPerRow - 1) : 0.5;
+      if (!row) {
+        const back = idx.rows[idx.rows.length - 1];
+        return {
+          x: back.cx, y: back.cy, row: null, seat: null, row_found: false, seat_found: false,
+          rows_total: idx.rows.length, rows_from_front: back.from_front, rows_from_portal: 0, seat_side_from_portal: 'middle',
+          seats_in_row: back.seats.length,
+          distance_from_portal_m: m(Math.hypot(back.cx - portal.x, back.cy - portal.y)),
+          confidence: 'row_unknown_back_row'
+        };
       }
-      // seat 1 assumed at the clockwise edge of the wedge (screen space)
-      const angle = section.angle_deg + (0.5 - seatT) * 2 * section.half_wedge_deg * 0.85;
-      const x = round1(center.x + Math.cos(deg2rad(angle)) * r);
-      const y = round1(center.y + Math.sin(deg2rad(angle)) * r);
 
-      const rowsFromPortal = rows - Math.max(1, rowIdx);
-      const seatSide = seatT < 0.4 ? 'right' : seatT > 0.6 ? 'left' : 'middle';
+      const seat = seatInfo ? row.seatMap.get(seatInfo.index) : null;
+      if (seatInfo && !seat) {
+        const nums = row.seats.map((s) => s.number);
+        warnings.push({
+          code: 'SEAT_NOT_FOUND',
+          fa: `صندلی ${seatInfo.label} در ردیف ${row.row} سکشن ${section.section} وجود ندارد (صندلی‌های ${Math.min(...nums)} تا ${Math.max(...nums)}). وسط ردیف نمایش داده می‌شود.`,
+          en: `Seat ${seatInfo.label} does not exist in row ${row.row} of section ${section.section} (seats ${Math.min(...nums)}–${Math.max(...nums)}). Shown at the row centre.`
+        });
+      }
+      const p = seat ? { x: seat.x, y: seat.y } : { x: row.cx, y: row.cy };
+      const lateral = (q) => (q.x - row.cx) * right.x + (q.y - row.cy) * right.y;
+      const halfWidth = Math.max(...row.seats.map((s) => Math.abs(lateral(s))));
+      const lat = lateral(p);
+      const side = Math.abs(lat) <= Math.max(45, halfWidth * 0.2) ? 'middle' : lat > 0 ? 'right' : 'left';
+      const fromLeft = seat ? row.seats.filter((s) => lateral(s) < lat - 1e-6).length + 1 : null;
+
       return {
-        x, y, angle_deg: round1(angle), radius: round1(r),
-        rows_from_portal: rowsFromPortal,
-        rows_from_front: Math.max(1, rowIdx) - 1,
-        seat_side_from_portal: seatSide,
-        confidence: 'heuristic_interpolation'
+        x: p.x, y: p.y,
+        row: row.row, seat: seat ? seat.number : null,
+        row_found: true, seat_found: !!seat,
+        rows_total: idx.rows.length,
+        rows_from_front: row.from_front,
+        rows_from_portal: idx.rows.length - 1 - row.from_front,
+        seats_in_row: row.seats.length,
+        seat_index_from_left: fromLeft,          // counted from the left when facing the floor/stage
+        seat_side_from_portal: side,
+        distance_from_portal_m: m(Math.hypot(p.x - portal.x, p.y - portal.y)),
+        ...(seat ? { status: seat.status, status_code: seat.status_code, price: seat.price } : {}),
+        confidence: seat ? 'exact_seatmap' : 'row_centroid'
       };
     }
 
@@ -372,11 +443,13 @@
             type: 'lobby', icon: '🏟️', level: 1, node_ids: [node.id],
             from: from && { x: from.x, y: from.y }, to: { x: node.x, y: node.y },
             title: { fa: 'وارد سالن ورودی شوید', en: 'Enter the entrance hall', tr: 'Giriş holüne girin' },
-            detail: {
-              fa: section.level === 1 ? 'مقصد شما در همین طبقه است.' : `باید به ${levelName(section.level, 'fa')} بروید.`,
-              en: section.level === 1 ? 'Your seat is on this level.' : `You need to go up to ${levelName(section.level, 'en')}.`,
-              tr: section.level === 1 ? 'Koltuğunuz bu katta.' : `${levelName(section.level, 'tr')}’a çıkmanız gerekiyor.`
-            },
+            detail: section.floor
+              ? { fa: 'مقصد شما در کف سالن (جلوی صحنه) است؛ از همین طبقه با تونل به کف سالن می‌روید.', en: 'Your seat is on the arena floor; you reach it from this level through the floor tunnel.', tr: 'Koltuğunuz zeminde; bu kattan zemin tüneliyle ulaşırsınız.' }
+              : {
+                fa: section.level === 1 ? 'مقصد شما در همین طبقه است.' : `باید به ${levelName(section.level, 'fa')} بروید.`,
+                en: section.level === 1 ? 'Your seat is on this level.' : `You need to go up to ${levelName(section.level, 'en')}.`,
+                tr: section.level === 1 ? 'Koltuğunuz bu katta.' : `${levelName(section.level, 'tr')}’a çıkmanız gerekiyor.`
+              },
             distance_m: m(viaEdge ? viaEdge.length_units : 0)
           });
           i += 1; continue;
@@ -455,9 +528,9 @@
             direction: Math.abs(delta) < 1 ? 'straight' : clockwise ? 'clockwise' : 'counter_clockwise',
             passed_sections: passed,
             title: {
-              fa: `در راهروی ${levelName(node.level, 'fa')} به سمت ${zoneName(section.zone, 'fa')} حرکت کنید`,
-              en: `Walk along the ${levelName(node.level, 'en')} concourse towards the ${zoneName(section.zone, 'en')} side`,
-              tr: `${levelName(node.level, 'tr')} koridorunda ${zoneName(section.zone, 'tr')} tarafına yürüyün`
+              fa: `در راهروی ${levelName(node.level, 'fa')} به سمت «${zoneName(section.zone, 'fa')}» حرکت کنید`,
+              en: `Walk along the ${levelName(node.level, 'en')} concourse towards the ${zoneName(section.zone, 'en')}`,
+              tr: `${levelName(node.level, 'tr')} koridorunda ${zoneName(section.zone, 'tr')} yönünde yürüyün`
             },
             detail: {
               fa: passedText
@@ -475,20 +548,35 @@
           i = j + 1; continue;
         }
 
+        if (node.type === 'tunnel') {
+          push({
+            type: 'tunnel', icon: '⬇️', level: node.level, node_ids: [node.id],
+            from: from && { x: from.x, y: from.y }, to: { x: node.x, y: node.y },
+            title: { fa: 'از تونل زیر جایگاه به کف سالن بروید', en: 'Take the tunnel under the stands down to the floor', tr: 'Tribün altındaki tünelden zemine inin' },
+            detail: { fa: `تونل کف سالن به محوطه ${section.section} می‌رسد.`, en: `The floor tunnel leads to the ${section.section} area.`, tr: `Zemin tüneli ${section.section} alanına çıkar.` },
+            distance_m: m(viaEdge ? viaEdge.length_units : 0)
+          });
+          i += 1; continue;
+        }
+
         if (node.type === 'portal') {
           push({
             type: 'portal', icon: '🚪', level: node.level, node_ids: [node.id],
             from: from && { x: from.x, y: from.y }, to: { x: node.x, y: node.y },
-            title: {
-              fa: `از ورودی سکشن ${section.section} وارد شوید`,
-              en: `Enter through the section ${section.section} portal`,
-              tr: `${section.section} blok girişinden girin`
-            },
-            detail: {
-              fa: `ورودی سکشن در سمت ${zoneName(section.zone, 'fa')} سالن، ${levelName(section.level, 'fa')}.`,
-              en: `Portal on the ${zoneName(section.zone, 'en')} side, ${levelName(section.level, 'en')}.`,
-              tr: `${zoneName(section.zone, 'tr')} tarafı, ${levelName(section.level, 'tr')}.`
-            },
+            title: section.floor
+              ? { fa: `وارد محوطه ${section.section} (کف سالن) شوید`, en: `Enter the ${section.section} floor area`, tr: `${section.section} zemin alanına girin` }
+              : {
+                fa: `از ورودی سکشن ${section.section} وارد شوید`,
+                en: `Enter through the section ${section.section} portal`,
+                tr: `${section.section} blok girişinden girin`
+              },
+            detail: section.floor
+              ? { fa: 'ورودی کف سالن در انتهای عقبی محوطه، روبه‌روی صحنه است.', en: 'The floor entrance is at the rear of the floor, facing the stage.', tr: 'Zemin girişi alanın arkasında, sahneye bakar.' }
+              : {
+                fa: `ورودی سکشن پشت آخرین ردیف، ${zoneName(section.zone, 'fa')}، ${levelName(section.level, 'fa')}.`,
+                en: `Portal behind the last row, ${zoneName(section.zone, 'en')}, ${levelName(section.level, 'en')}.`,
+                tr: `Giriş son sıranın arkasında, ${zoneName(section.zone, 'tr')}, ${levelName(section.level, 'tr')}.`
+              },
             distance_m: m(viaEdge ? viaEdge.length_units : 0)
           });
           i += 1; continue;
@@ -513,25 +601,36 @@
       const sideEn = { left: 'to your left', right: 'to your right', middle: 'in the middle' }[seatPos.seat_side_from_portal];
       const sideTr = { left: 'solunuzda', right: 'sağınızda', middle: 'ortada' }[seatPos.seat_side_from_portal];
 
-      if (rowLabel) {
+      const towardsFa = section.floor ? 'به سمت صحنه' : 'به سمت زمین/صحنه';
+      if (rowLabel && seatPos.row_found) {
+        const rf = seatPos.rows_from_front + 1, rp = seatPos.rows_from_portal, rt = seatPos.rows_total;
         push({
           type: 'row', icon: '🪑', level: section.level, node_ids: [],
           from: { x: portal.x, y: portal.y }, to: { x: seatPos.x, y: seatPos.y },
           title: { fa: `به ردیف ${rowLabel} بروید`, en: `Go to row ${rowLabel}`, tr: `${rowLabel} sırasına gidin` },
           detail: {
-            fa: seatPos.rows_from_portal === 0
-              ? 'ردیف شما بالاترین ردیف، درست کنار ورودی سکشن است.'
-              : `از ورودی سکشن حدود ${seatPos.rows_from_portal} ردیف به سمت زمین پایین بروید (ردیف ${rowLabel} ${seatPos.rows_from_front + 1}مین ردیف از جلو است).`,
-            en: seatPos.rows_from_portal === 0
-              ? 'Your row is the top row, right by the portal.'
-              : `Walk down about ${seatPos.rows_from_portal} rows from the portal (row ${rowLabel} is row #${seatPos.rows_from_front + 1} from the front).`,
-            tr: seatPos.rows_from_portal === 0
-              ? 'Sıranız girişin hemen yanında, en üst sıra.'
-              : `Girişten yaklaşık ${seatPos.rows_from_portal} sıra aşağı inin.`
+            fa: rp === 0
+              ? `ردیف ${rowLabel} آخرین ردیف (${rt}مین از جلو)، درست کنار ورودی است.`
+              : `از ورودی ${rp} ردیف ${towardsFa} پایین بروید؛ ردیف ${rowLabel} ${rf}مین ردیف از جلو از ${rt} ردیف است.`,
+            en: rp === 0
+              ? `Row ${rowLabel} is the back row (row ${rt} of ${rt}), right at the portal.`
+              : `Walk ${rp} row${rp > 1 ? 's' : ''} down from the portal; row ${rowLabel} is row ${rf} of ${rt} from the front.`,
+            tr: rp === 0
+              ? `${rowLabel} sırası girişin hemen yanındaki son sıra (${rt}/${rt}).`
+              : `Girişten ${rp} sıra aşağı inin; ${rowLabel} sırası önden ${rf}. sıra (toplam ${rt}).`
           },
-          distance_m: Math.round(seatPos.rows_from_portal * 0.85)
+          distance_m: Math.round(seatPos.distance_from_portal_m)
+        });
+      } else if (rowLabel) {
+        push({
+          type: 'row', icon: '🪑', level: section.level, node_ids: [],
+          from: { x: portal.x, y: portal.y }, to: { x: seatPos.x, y: seatPos.y },
+          title: { fa: `ردیف ${rowLabel} را پیدا کنید`, en: `Find row ${rowLabel}`, tr: `${rowLabel} sırasını bulun` },
+          detail: { fa: 'این ردیف در نقشه صندلی‌ها نیست؛ شماره ردیف‌ها را روی پله‌ها چک کنید.', en: 'This row is not in the seat map; check the row numbers on the aisle.', tr: 'Bu sıra koltuk planında yok; sıra numaralarını kontrol edin.' },
+          distance_m: Math.round(seatPos.distance_from_portal_m)
         });
       }
+      const k = seatPos.seat_index_from_left, n = seatPos.seats_in_row;
       push({
         type: 'seat', icon: '💺', level: section.level, node_ids: [],
         from: { x: portal.x, y: portal.y }, to: { x: seatPos.x, y: seatPos.y },
@@ -541,9 +640,15 @@
           tr: seatLabel ? `Koltuk ${seatLabel} – vardınız` : 'Koltuğunuza ulaşın'
         },
         detail: {
-          fa: seatLabel ? `صندلی ${seatLabel} تقریباً ${sideFa} ردیف (نسبت به ورودی سکشن) است. شماره‌های روی صندلی را چک کنید.` : '',
-          en: seatLabel ? `Seat ${seatLabel} is roughly ${sideEn} of the row (facing the floor from the portal). Check the seat numbers.` : '',
-          tr: seatLabel ? `Koltuk ${seatLabel} yaklaşık ${sideTr}. Koltuk numaralarını kontrol edin.` : ''
+          fa: seatPos.seat_found
+            ? `صندلی ${seatLabel} ${k}مین صندلی از سمت چپ ردیف (رو به صحنه) از ${n} صندلی است – ${sideFa} ردیف. شماره روی صندلی را چک کنید.`
+            : seatLabel ? `صندلی ${seatLabel} در این ردیف پیدا نشد؛ شماره‌های روی صندلی‌ها را چک کنید.` : '',
+          en: seatPos.seat_found
+            ? `Seat ${seatLabel} is seat ${k} of ${n} counted from the left when facing the stage – ${sideEn}. Check the seat number.`
+            : seatLabel ? `Seat ${seatLabel} was not found in this row; check the seat numbers.` : '',
+          tr: seatPos.seat_found
+            ? `Koltuk ${seatLabel}, sahneye bakarken soldan ${k}. koltuk (toplam ${n}) – ${sideTr}. Koltuk numarasını kontrol edin.`
+            : seatLabel ? `Koltuk ${seatLabel} bu sırada bulunamadı; koltuk numaralarını kontrol edin.` : ''
         },
         distance_m: 0
       });
@@ -557,31 +662,59 @@
       if (!origin || typeof origin.lat !== 'number' || typeof origin.lon !== 'number') return null;
       if (Number.isNaN(origin.lat) || Number.isNaN(origin.lon)) return null;
       const gateLL = { lat: gate.lat, lon: gate.lon };
-      const distance = haversineMeters(origin, gateLL);
-      const brg = bearingDeg(origin, gateLL);
+      const straight = haversineMeters(origin, gateLL);
+      const wps = (gate.approach && gate.approach.waypoints) || [];
+      const ll = (w) => ({ lat: w[0], lon: w[1] });
+
+      // Follow the organiser's approach path (street → entrance): walk to its nearest waypoint, then follow
+      // the drawn path to the door (the paths exist because of fences/buildings, so never shortcut them).
+      // Only go straight to the door when already next to it.
+      const remaining = new Array(wps.length + 1).fill(0);
+      for (let i = wps.length - 1; i >= 0; i--) {
+        remaining[i] = remaining[i + 1] + haversineMeters(ll(wps[i]), i + 1 < wps.length ? ll(wps[i + 1]) : gateLL);
+      }
+      let join = { idx: wps.length, cost: straight };
+      if (wps.length && straight > 25) {
+        let nearest = 0, nearestD = Infinity;
+        for (let i = 0; i < wps.length; i++) {
+          const d = haversineMeters(origin, ll(wps[i]));
+          if (d < nearestD) { nearestD = d; nearest = i; }
+        }
+        join = { idx: nearest, cost: nearestD + remaining[nearest] };
+      }
+      const polyline = [[origin.lat, origin.lon], ...wps.slice(join.idx), [gate.lat, gate.lon]];
+      const distance = join.cost;
+      const brg = bearingDeg(origin, ll(polyline[1]));
       const dir = compass(brg);
-      const originMap = distance <= 2500 ? latLonToMap(origin) : null;
-      if (distance > 2500) {
+      const near = straight <= 2500;
+      if (!near) {
         warnings.push({
           code: 'ORIGIN_FAR',
           fa: 'موقعیت شما بیش از ۲.۵ کیلومتر از سالن فاصله دارد؛ مسیر پیاده روی نقشه داخلی رسم نمی‌شود، از لینک مسیریابی استفاده کنید.',
           en: 'You are more than 2.5 km from the venue; the walking leg is not drawn on the indoor map – use the directions link.'
         });
       }
-      const url = `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${gate.lat},${gate.lon}&travelmode=walking`;
+      const via = wps.slice(join.idx);
+      const viaForUrl = via.length > 2 ? [via[0], via[via.length - 1]] : via;
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${gate.lat},${gate.lon}&travelmode=walking` +
+        (viaForUrl.length ? `&waypoints=${viaForUrl.map((w) => `${w[0]},${w[1]}`).join('|')}` : '');
+      const desc = gate.approach && gate.approach.start_description;
       return {
-        origin: { lat: origin.lat, lon: origin.lon, accuracy_m: origin.accuracy_m || null, map_xy: originMap },
+        origin: { lat: origin.lat, lon: origin.lon, accuracy_m: origin.accuracy_m || null, map_xy: near ? latLonToMap(origin) : null },
         gate: { id: gate.id, lat: gate.lat, lon: gate.lon, map_xy: { x: gate.x, y: gate.y }, geo_confidence: gate.geo_confidence },
         distance_m: Math.round(distance),
+        straight_line_m: Math.round(straight),
         bearing_deg: Math.round(brg),
         compass: dir,
         compass_fa: COMPASS_FA[dir],
         duration_min: Math.round(distance / walking.speed_m_per_s / 60),
-        polyline: [[origin.lat, origin.lon], [gate.lat, gate.lon]],
+        polyline,
+        polyline_map_xy: near ? polyline.map((w) => latLonToMap(ll(w))) : null,
+        approach: gate.approach ? { color: gate.approach.color, length_m: gate.approach.length_m, joined_at_waypoint: join.idx, followed_waypoints: via.length, description: desc } : null,
         directions_url: url,
         note: {
-          fa: 'خط مستقیم است؛ برای مسیر واقعی خیابان‌ها از لینک مسیریابی استفاده کنید. مختصات ورودی تخمینی است.',
-          en: 'Straight-line only; use the directions link for the real street route. Gate coordinates are approximate.'
+          fa: (desc ? `مسیر ورود: ${desc.fa}. ` : '') + 'مختصات ورودی از پین‌های برگزارکننده است؛ برای جزئیات خیابان‌ها از لینک مسیریابی استفاده کنید.',
+          en: (desc ? `Approach: ${desc.en}. ` : '') + 'Entrance position from the organiser\'s GPS pins; use the directions link for street detail.'
         }
       };
     }
@@ -593,7 +726,7 @@
       const sectionKey = String(req.section == null ? '' : req.section).trim();
       const section = sections.get(sectionKey);
       if (!section) {
-        const err = new Error(`Unknown section "${sectionKey}". Valid sections: 101-120, 201-220, 401-422.`);
+        const err = new Error(`Unknown section "${sectionKey}". Valid sections: ${graph.sections.map((s) => s.section).join(', ')}.`);
         err.code = 'UNKNOWN_SECTION';
         throw err;
       }
@@ -625,11 +758,11 @@
           n: 0, type: 'outdoor', icon: '📍', level: 0, node_ids: [],
           from: outdoor.origin.map_xy, to: { x: gate.x, y: gate.y },
           title: {
-            fa: `پیاده تا ${gate.display.tr}: حدود ${outdoor.distance_m} متر به سمت ${outdoor.compass_fa}`,
-            en: `Walk to ${gate.display.en}: about ${outdoor.distance_m} m towards ${outdoor.compass}`,
+            fa: `پیاده تا ${gate.short ? gate.short.fa : gate.display.fa} (${gate.display.tr}): حدود ${outdoor.distance_m} متر، ابتدا به سمت ${outdoor.compass_fa}`,
+            en: `Walk to the ${gate.short ? gate.short.en : gate.display.en} (${gate.display.tr}): about ${outdoor.distance_m} m, first heading ${outdoor.compass}`,
             tr: `${gate.display.tr}’ne yürüyün: yaklaşık ${outdoor.distance_m} m`
           },
-          detail: { fa: outdoor.note.fa, en: outdoor.note.en, tr: '' },
+          detail: { fa: outdoor.note.fa, en: outdoor.note.en, tr: outdoor.approach && outdoor.approach.description ? outdoor.approach.description.tr : '' },
           distance_m: outdoor.distance_m,
           directions_url: outdoor.directions_url
         });
@@ -656,18 +789,21 @@
           gate_input: req.gate || null
         },
         gate: {
-          id: gate.id, display: gate.display, node: gate.node,
+          id: gate.id, display: gate.display, short: gate.short || null, node: gate.node,
           source: gateInfo.source, source_label: gateInfo.source_label,
+          serves_levels: gate.serves_levels || null, compass_label: gate.compass_label || null,
           map_xy: { x: gate.x, y: gate.y }, lat: gate.lat, lon: gate.lon,
-          verified_label: gate.verified_label, geo_confidence: gate.geo_confidence
+          verified_location: !!gate.verified_location, geo_confidence: gate.geo_confidence
         },
         destination: {
           section: section.section,
           level: section.level,
           level_name: graph.levels[section.level].name,
+          floor: !!section.floor,
           zone: section.zone,
+          zone_name: ZONE_NAMES[section.zone] || null,
           portal: { node: section.portal.node, x: section.portal.x, y: section.portal.y },
-          seat: { row: rowInfo ? rowInfo.label : null, seat: seatInfo ? seatInfo.label : null, ...seatPos }
+          seat: { ...seatPos, row: seatPos.row || (rowInfo ? rowInfo.label : null), seat: seatPos.seat != null ? String(seatPos.seat) : (seatInfo ? seatInfo.label : null) }
         },
         summary: {
           indoor_distance_m: Math.round(indoorMeters),
@@ -684,7 +820,8 @@
         outdoor,
         warnings,
         confidence: {
-          fa: 'مختصات از روی نقشه عمومی صندلی‌ها تخمین زده شده و راهروها، پله‌ها و ورودی‌ها مدل‌سازی شده‌اند، نه نقشه‌برداری‌شده.',
+          seat: seatPos.confidence,
+          fa: 'موقعیت صندلی‌ها، ردیف‌ها و سکشن‌ها دقیقاً از نقشه صندلی سیستم بلیت‌فروشی است؛ ورودی سکشن‌ها، راهروها، پله‌ها، آسانسورها و ورودی‌های سالن از روی همان هندسه مدل‌سازی شده‌اند (نه نقشه‌برداری‌شده). مقیاس متری و جهت جغرافیایی تخمینی است.',
           en: graph.important_warning
         }
       };
@@ -692,18 +829,47 @@
 
     function listSections() {
       return graph.sections.map((s) => ({
-        section: s.section, level: s.level, zone: s.zone, known_ticket_gate_label: s.known_ticket_gate_label
+        section: s.section, level: s.level, floor: !!s.floor, zone: s.zone, zone_name: ZONE_NAMES[s.zone] || null,
+        rows: s.rows, row_count: s.row_count, seat_count: s.seat_count, known_ticket_gate_label: s.known_ticket_gate_label
       }));
+    }
+
+    /** All seats of a section (optionally one row) with exact coordinates and sales status. */
+    function listSeats(sectionName, rowLabel) {
+      const idx = seatIndex.get(String(sectionName == null ? '' : sectionName).trim());
+      if (!idx) {
+        const err = new Error(`Unknown section "${sectionName}"`);
+        err.code = 'UNKNOWN_SECTION';
+        throw err;
+      }
+      const rowKey = rowLabel != null && String(rowLabel).trim() !== '' ? (parseRow(rowLabel) || {}).label : null;
+      const rows = idx.rows.filter((r) => !rowKey || r.row === rowKey);
+      return {
+        section: idx.section,
+        rows: rows.map((r) => ({
+          row: r.row, from_front: r.from_front,
+          seats: r.seats.map((s) => ({ number: s.number, x: s.x, y: s.y, status: s.status, price: s.price }))
+        }))
+      };
+    }
+
+    function getSeat(sectionName, rowLabel, seatNumber) {
+      const idx = seatIndex.get(String(sectionName == null ? '' : sectionName).trim());
+      const r = idx && parseRow(rowLabel) ? idx.rowMap.get(parseRow(rowLabel).label) : null;
+      const s = r && parseSeat(seatNumber) ? r.seatMap.get(parseSeat(seatNumber).index) : null;
+      return s ? { section: idx.section, row: r.row, number: s.number, x: s.x, y: s.y, status: s.status, price: s.price } : null;
     }
 
     function listGates() {
       return graph.gates.map((g) => ({
-        id: g.id, display: g.display, aliases: g.aliases, lat: g.lat, lon: g.lon, verified_label: g.verified_label
+        id: g.id, display: g.display, short: g.short || null, aliases: g.aliases, serves_levels: g.serves_levels || null,
+        compass_label: g.compass_label || null, lat: g.lat, lon: g.lon, verified_location: !!g.verified_location,
+        approach: g.approach || null
       }));
     }
 
-    return { route, listSections, listGates, normalizeGate, mapToLatLon, latLonToMap, dijkstra, graph };
+    return { route, listSections, listSeats, getSeat, listGates, normalizeGate, mapToLatLon, latLonToMap, dijkstra, graph };
   }
 
-  return { createRouter, parseRow, parseSeat, haversineMeters, bearingDeg };
+  return { createRouter, parseRow, parseSeat, haversineMeters, bearingDeg, ZONE_NAMES };
 });

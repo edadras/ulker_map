@@ -4,7 +4,10 @@
  *
  *   GET  /navigation/route?section=414&row=L&seat=1&gate=BATI[&event_id=123&lat=..&lon=..&accessible=1]
  *   POST /navigation/route            { "event_id":123, "section":"414", "row":"L", "seat":"1", "gate":"BATI", "origin":{"lat":..,"lon":..} }
+ *   GET  /navigation/route?seat_id=<ticketing seat id>[&gate=BATI]   (section/row/seat resolved from data/seatmap.json)
  *   GET  /navigation/sections
+ *   GET  /navigation/seats?section=414[&row=L]      exact seat coordinates + sales status of a section
+ *   GET  /navigation/seats?id=<seat id>             one seat by ticketing-system id
  *   GET  /navigation/gates
  *   GET  /navigation/graph
  *   GET  /health
@@ -21,6 +24,7 @@ const { createRouter } = require('../src/router');
 const ROOT = path.resolve(__dirname, '..');
 const GRAPH_PATH = path.join(ROOT, 'data', 'ulker_arena_navigation_graph.json');
 const EVENTS_PATH = path.join(ROOT, 'data', 'events.json');
+const SEATMAP_PATH = path.join(ROOT, 'data', 'seatmap.json');
 
 function loadJson(p, fallback) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { if (fallback !== undefined) return fallback; throw e; }
@@ -29,6 +33,8 @@ function loadJson(p, fallback) {
 const graph = loadJson(GRAPH_PATH);
 const events = loadJson(EVENTS_PATH, {});
 const router = createRouter(graph);
+/** Ticketing-system seat ids → seat (lets the API accept the id printed in the ticket payload). */
+const seatById = new Map((loadJson(SEATMAP_PATH, { seats: [] }).seats || []).map((s) => [String(s.id), s]));
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -54,12 +60,25 @@ function toBool(v) {
   return s === '1' || s === 'true' || s === 'yes' || s === 'on';
 }
 
+function resolveSeatId(seatId) {
+  if (seatId == null || seatId === '') return null;
+  const s = seatById.get(String(seatId));
+  if (!s) {
+    const err = new Error(`Unknown seat_id "${seatId}" (not in data/seatmap.json)`);
+    err.code = 'UNKNOWN_SEAT_ID';
+    throw err;
+  }
+  return { section: String(s.sectionName), row: String(s.rowName), seat: String(s.number), id: s.id, status: s.status, price: s.price };
+}
+
 function buildRequest(params) {
+  const fromId = resolveSeatId(params.seat_id);
   const req = {
     event_id: params.event_id != null && params.event_id !== '' ? params.event_id : null,
-    section: params.section,
-    row: params.row,
-    seat: params.seat,
+    section: params.section != null && params.section !== '' ? params.section : (fromId ? fromId.section : undefined),
+    row: params.row != null && params.row !== '' ? params.row : (fromId ? fromId.row : undefined),
+    seat: params.seat != null && params.seat !== '' ? params.seat : (fromId ? fromId.seat : undefined),
+    seat_id: fromId ? fromId.id : null,
     gate: params.gate,
     accessible: typeof params.accessible === 'boolean' ? params.accessible : toBool(params.accessible)
   };
@@ -89,7 +108,7 @@ function handleRoute(res, params) {
     const result = router.route(req);
     sendJson(res, 200, result);
   } catch (err) {
-    const status = err.code === 'UNKNOWN_SECTION' || err.code === 'UNKNOWN_GATE' ? 400 : err.code === 'NO_ROUTE' ? 422 : 500;
+    const status = ['UNKNOWN_SECTION', 'UNKNOWN_GATE', 'UNKNOWN_SEAT_ID'].includes(err.code) ? 400 : err.code === 'NO_ROUTE' ? 422 : 500;
     sendJson(res, status, { ok: false, error: { code: err.code || 'INTERNAL', message: err.message }, request: req || params });
   }
 }
@@ -121,6 +140,18 @@ function createServer() {
     }
     if (p === '/health') return sendJson(res, 200, { ok: true, venue: graph.venue.name, nodes: graph.nodes.length, edges: graph.edges.length });
     if (p === '/navigation/sections') return sendJson(res, 200, { ok: true, sections: router.listSections() });
+    if (p === '/navigation/seats') {
+      const id = url.searchParams.get('id');
+      try {
+        if (id) {
+          const seat = resolveSeatId(id);
+          return sendJson(res, 200, { ok: true, seat: { ...seat, ...router.getSeat(seat.section, seat.row, seat.seat) } });
+        }
+        return sendJson(res, 200, { ok: true, ...router.listSeats(url.searchParams.get('section'), url.searchParams.get('row')) });
+      } catch (err) {
+        return sendJson(res, err.code === 'UNKNOWN_SECTION' || err.code === 'UNKNOWN_SEAT_ID' ? 400 : 500, { ok: false, error: { code: err.code || 'INTERNAL', message: err.message } });
+      }
+    }
     if (p === '/navigation/gates') return sendJson(res, 200, { ok: true, gates: router.listGates() });
     if (p === '/navigation/graph') return sendJson(res, 200, graph);
     if (p === '/navigation/events') return sendJson(res, 200, { ok: true, events: Object.fromEntries(Object.entries(events).filter(([k]) => !k.startsWith('_'))) });

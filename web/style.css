@@ -1,7 +1,7 @@
 :root {
   --bg: #0f1420; --panel: #161d2e; --panel2: #1d2740; --text: #e8edf7; --muted: #94a0bd; --line: #2b3855;
   --accent: #4f8cff; --accent2: #7bd389; --warn: #ffb547; --danger: #ff6b6b;
-  --l1: #2a9d8f; --l2: #e9c46a; --l4: #e76f51; --l0: #8d99ae;
+  --l1: #2a9d8f; --l2: #e9c46a; --l4: #e76f51; --l0: #8d99ae; --floor: #9b5de5;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Vazirmatn", "Segoe UI", Tahoma, Arial, sans-serif; font-size: 15px; }
@@ -66,37 +66,49 @@ button.active { background: var(--accent); color: white; border-color: var(--acc
 .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
 .legend i.dash { width: 18px; height: 0; border-top: 2px dashed var(--muted); border-radius: 0; }
 
-/* SVG */
-.sec { stroke: #0f1420; stroke-width: 1.5; cursor: pointer; transition: opacity .2s; }
+/* SVG – ticketing-canvas units (1 unit ≈ 1.8 cm; the whole map is ≈ 7300 × 5300 units) */
+.sec { stroke: #0f1420; stroke-width: 8; cursor: pointer; transition: opacity .2s; }
 .sec[data-level="1"] { fill: var(--l1); fill-opacity: .55; }
 .sec[data-level="2"] { fill: var(--l2); fill-opacity: .45; }
 .sec[data-level="4"] { fill: var(--l4); fill-opacity: .45; }
+.sec[data-floor="1"] { fill: var(--floor); fill-opacity: .4; }
 .sec:hover { fill-opacity: .9; }
-.sec.dest { fill-opacity: 1; stroke: #fff; stroke-width: 3; }
-.secLabel { fill: #f5f7fb; font-size: 15px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-.corridor { fill: none; stroke: #94a0bd; stroke-opacity: .5; stroke-width: 2; stroke-dasharray: 6 6; }
-.court { fill: #223055; stroke: #4f8cff; stroke-width: 2; }
-.courtLabel { fill: #cfd8ee; font-size: 22px; text-anchor: middle; dominant-baseline: middle; letter-spacing: 3px; }
-.core { fill: #1d2740; stroke: #cfd8ee; stroke-width: 2; }
-.coreLabel { fill: #fff; font-size: 16px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
-.infraNode { fill: #1d2740; stroke: #cfd8ee; stroke-width: 2; }
+.sec.dest { fill-opacity: .2; stroke: #fff; stroke-width: 16; }
+.secLabel { fill: #f5f7fb; font-size: 90px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.corridor { fill: none; stroke: #94a0bd; stroke-opacity: .55; stroke-width: 12; stroke-dasharray: 40 40; }
+.tunnel { fill: none; stroke: var(--floor); stroke-opacity: .8; stroke-width: 12; stroke-dasharray: 20 30; }
+.stage { fill: #223055; stroke: #4f8cff; stroke-width: 10; }
+.stageLabel { fill: #cfd8ee; font-size: 150px; text-anchor: middle; dominant-baseline: middle; letter-spacing: 20px; }
+.core { fill: #1d2740; stroke: #cfd8ee; stroke-width: 10; }
+.coreLabel { fill: #fff; font-size: 100px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.infraNode { fill: #1d2740; stroke: #cfd8ee; stroke-width: 10; }
 .infraNode.gate { fill: #4f8cff; stroke: #fff; }
-.infraLabel { fill: #cfd8ee; font-size: 14px; dominant-baseline: middle; }
-.infraIcon { font-size: 16px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.infraLabel { fill: #cfd8ee; font-size: 80px; dominant-baseline: middle; }
+.infraIcon { font-size: 95px; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.seatDot { stroke: #0f1420; stroke-width: 2; }
+.seatDot[data-status="sold"] { fill: #5b6b8c; }
+.seatDot[data-status="reserved"] { fill: #e9c46a; }
+.seatDot[data-status="free"] { fill: #7bd389; }
+.seatDot[data-status="payment_in_progress"] { fill: #ffb547; }
+.rowLabel { fill: #cfd8ee; font-size: 34px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.compass { fill: #cfd8ee; font-size: 80px; text-anchor: middle; dominant-baseline: middle; }
+.compassArrow { fill: #ffb547; }
+.compassRing { fill: none; stroke: #94a0bd; stroke-width: 8; }
 .dim { opacity: .12; }
-.route { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: .95; }
-.routeGlow { fill: none; stroke: #fff; stroke-width: 12; stroke-opacity: .18; stroke-linecap: round; stroke-linejoin: round; }
-.routeAnim { fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 10 18; stroke-linecap: round; animation: dash 1.2s linear infinite; }
-@keyframes dash { to { stroke-dashoffset: -28; } }
-.seatPath { fill: none; stroke: #fff; stroke-width: 3; stroke-dasharray: 5 6; }
-.outdoorPath { fill: none; stroke: #7bd389; stroke-width: 4; stroke-dasharray: 12 10; }
-.marker { stroke: #fff; stroke-width: 2.5; }
-.seatMarker { fill: #ffd166; stroke: #fff; stroke-width: 2; }
-.markerLabel { fill: #fff; font-size: 16px; font-weight: 700; text-anchor: middle; }
-.vert { fill: none; stroke: #fff; stroke-width: 3; animation: pulse 1.4s ease-out infinite; }
-@keyframes pulse { 0% { r: 8; stroke-opacity: 1; } 100% { r: 30; stroke-opacity: 0; } }
-.hl { fill: none; stroke: var(--accent); stroke-width: 4; stroke-dasharray: 4 4; }
-.youMarker { fill: #7bd389; stroke: #fff; stroke-width: 3; }
+.route { fill: none; stroke-width: 40; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: .95; }
+.routeGlow { fill: none; stroke: #fff; stroke-width: 70; stroke-opacity: .18; stroke-linecap: round; stroke-linejoin: round; }
+.routeAnim { fill: none; stroke: #fff; stroke-width: 16; stroke-dasharray: 60 100; stroke-linecap: round; animation: dash 1.2s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -160; } }
+.seatPath { fill: none; stroke: #fff; stroke-width: 16; stroke-dasharray: 30 36; }
+.outdoorPath { fill: none; stroke: #7bd389; stroke-width: 24; stroke-dasharray: 70 60; }
+.marker { stroke: #fff; stroke-width: 14; }
+.seatMarker { fill: #ffd166; stroke: #fff; stroke-width: 10; }
+.markerLabel { fill: #fff; font-size: 95px; font-weight: 700; text-anchor: middle; }
+.vert { fill: none; stroke: #fff; stroke-width: 16; animation: pulse 1.4s ease-out infinite; }
+@keyframes pulse { 0% { r: 50; stroke-opacity: 1; } 100% { r: 180; stroke-opacity: 0; } }
+.hl { fill: none; stroke: var(--accent); stroke-width: 22; stroke-dasharray: 24 24; }
+.youMarker { fill: #7bd389; stroke: #fff; stroke-width: 16; }
+.seatInfo { color: var(--muted); font-size: .78rem; margin: -.2rem 0 .6rem; }
 
 .outdoor { border-top: 1px solid var(--line); background: var(--panel); }
 .outdoorInfo { padding: .6rem 1rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; font-size: .9rem; }
