@@ -1,0 +1,9 @@
+{
+  "_note": "Sample event → gate mapping (priority 2 of gate_policy). Replace with organiser data per event. Keys are event ids as strings.",
+  "123": {
+    "name": "Sample concert (demo data)",
+    "default_gate": "BATI",
+    "level_gates": { "1": "DOĞU", "2": "DOĞU", "4": "BATI" },
+    "section_gates": { "103": "DOĞU", "119": "DOĞU", "410": "BATI", "414": "BATI", "422": "BATI" }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "ulker-arena-indoor-navigation",
+  "version": "0.1.0",
+  "description": "Ticket → gate → security → level → section portal → seat wayfinding for Ülker Sports and Event Hall (prototype)",
+  "main": "src/router.js",
+  "scripts": {
+    "build": "node scripts/build_graph.js",
+    "start": "node server/index.js",
+    "test": "node scripts/build_graph.js && node --test",
+    "route": "node scripts/route_cli.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT",
+  "private": true
+}
